@@ -1,0 +1,9 @@
+{
+  "name": "powerxstore",
+  "version": "1.0.0",
+  "private": true,
+  "description": "POWERXSTORE Web Platform",
+  "scripts": {
+    "start": "node api/sync.js"
+  }
+}
