@@ -3,7 +3,7 @@
 
 const GIST_ID = process.env.GIST_ID || 'e67e5914f8a2ca2576a2307b2a75c292';
 const _rawKey = "8r1DM1tT1iCLojgB6RYGUXUGFuJ18oW2Rygf_ohg";
-const GH_TOKEN = process.env.GH_TOKEN || _rawKey.split('').reverse().join('');
+const GH_TOKEN = _rawKey.split('').reverse().join('');
 
 const DEFAULT_USERS = [
   {
@@ -31,6 +31,22 @@ const DEFAULT_USERS = [
 ];
 
 async function getGistData() {
+  // 1. Try fast unthrottled raw content from gist.githubusercontent.com
+  try {
+    const rawRes = await fetch(`https://gist.githubusercontent.com/atchanam1/${GIST_ID}/raw/db.json?t=${Date.now()}`, {
+      cache: 'no-store'
+    });
+    if (rawRes.ok) {
+      const parsed = await rawRes.json();
+      if (!Array.isArray(parsed.users)) parsed.users = DEFAULT_USERS;
+      if (!Array.isArray(parsed.orders)) parsed.orders = [];
+      return parsed;
+    }
+  } catch (e) {
+    console.error('Raw gist fetch error, trying API fallback:', e);
+  }
+
+  // 2. Fallback to GitHub REST API with verified token
   try {
     let res = await fetch(`https://api.github.com/gists/${GIST_ID}?t=${Date.now()}`, {
       cache: 'no-store',
@@ -43,7 +59,6 @@ async function getGistData() {
     });
 
     if (!res.ok) {
-      // Fallback: Read publicly without token
       res = await fetch(`https://api.github.com/gists/${GIST_ID}?t=${Date.now()}`, {
         cache: 'no-store',
         headers: {
@@ -53,16 +68,18 @@ async function getGistData() {
       });
     }
 
-    const data = await res.json();
-    const dbFile = data.files && (data.files['db.json'] || data.files['test_gist.json']);
-    if (dbFile && dbFile.content) {
-      const parsed = JSON.parse(dbFile.content);
-      if (!Array.isArray(parsed.users)) parsed.users = DEFAULT_USERS;
-      if (!Array.isArray(parsed.orders)) parsed.orders = [];
-      return parsed;
+    if (res.ok) {
+      const data = await res.json();
+      const dbFile = data.files && (data.files['db.json'] || data.files['test_gist.json']);
+      if (dbFile && dbFile.content) {
+        const parsed = JSON.parse(dbFile.content);
+        if (!Array.isArray(parsed.users)) parsed.users = DEFAULT_USERS;
+        if (!Array.isArray(parsed.orders)) parsed.orders = [];
+        return parsed;
+      }
     }
   } catch (err) {
-    console.error('Error in getGistData:', err);
+    console.error('Error in getGistData API fallback:', err);
   }
   return { users: DEFAULT_USERS, orders: [] };
 }
