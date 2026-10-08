@@ -277,6 +277,16 @@ if (localStorage.getItem('px_auth_clean_v') !== '20261009_guest_v5') {
   localStorage.setItem('px_auth_clean_v', '20261009_guest_v5');
 }
 
+// Default Recent Buyers Feed
+const DEFAULT_RECENT_BUYERS = [
+  { name: "Muhammud6666", item: "NEXUS V.2", price: 115 },
+  { name: "NightRider_X", item: "สินค้า : ปลดแบนทุกเชิฟเวอร์ ( ถาวร )", price: 99 },
+  { name: "CyberDrift", item: "TITAN SPOOFER PRO V3", price: 160 },
+  { name: "ShadowX99", item: "VALOR EXTERNAL VIP", price: 290 },
+  { name: "BangkokFiveM", item: "NEXUS V.2", price: 115 },
+  { name: "KaitomPro", item: "สินค้า : ปลดแบนทุกเชิฟเวอร์ ( ถาวร )", price: 99 }
+];
+
 // APP STATE
 const APP_STATE = {
   theme: localStorage.getItem('px_theme') || 'dark',
@@ -292,7 +302,12 @@ const APP_STATE = {
   purchases: JSON.parse(localStorage.getItem('px_orders') || '[]'),
   topupHistory: JSON.parse(localStorage.getItem('px_topups') || JSON.stringify(DEFAULT_TOPUPS)),
   securityConfig: JSON.parse(localStorage.getItem('px_sec_config') || JSON.stringify(DEFAULT_SECURITY_CONFIG)),
-  securityLogs: JSON.parse(localStorage.getItem('px_sec_logs') || JSON.stringify(DEFAULT_SECURITY_LOGS))
+  securityLogs: JSON.parse(localStorage.getItem('px_sec_logs') || JSON.stringify(DEFAULT_SECURITY_LOGS)),
+  recentBuyersConfig: JSON.parse(localStorage.getItem('px_recent_buyers_config') || JSON.stringify({
+    enabled: true,
+    realOnly: false,
+    buyers: DEFAULT_RECENT_BUYERS
+  }))
 };
 
 // Auto-migrate browser cache to new POWERXSTORE purple artwork and stock keys
@@ -1843,6 +1858,8 @@ function populateAdminSettingsForm() {
   if (logoPreview) {
     logoPreview.src = c.logoImage || 'assets/logo.png?v=20261009_v2';
   }
+
+  populateAdminRecentBuyers();
 }
 
 function handleLogoUpload(event) {
@@ -2308,51 +2325,200 @@ function showNotification(message, type = 'info') {
   }, 4000);
 }
 
-// LIVE RECENT PURCHASE SIMULATORS
+// ==========================================
+// LIVE RECENT PURCHASE TOAST ENGINE & ADMIN CONTROLLER
+// ==========================================
+let toastTimer = null;
+
 function startRecentPurchaseToasts() {
-  const recentBuyers = [
-    { name: "Muhammud6666", item: "NEXUS V.2", price: 115 },
-    { name: "NightRider_X", item: "สินค้า : ปลดแบนทุกเชิฟเวอร์ ( ถาวร )", price: 99 },
-    { name: "CyberDrift", item: "TITAN SPOOFER PRO V3", price: 160 },
-    { name: "ShadowX99", item: "VALOR EXTERNAL VIP", price: 290 },
-    { name: "BangkokFiveM", item: "NEXUS V.2", price: 115 },
-    { name: "KaitomPro", item: "สินค้า : ปลดแบนทุกเชิฟเวอร์ ( ถาวร )", price: 99 }
-  ];
+  if (toastTimer) clearTimeout(toastTimer);
 
   function triggerToast() {
-    const random = recentBuyers[Math.floor(Math.random() * recentBuyers.length)];
-    const stack = document.getElementById('toast-stack');
-    if (!stack) return;
+    const cfg = APP_STATE.recentBuyersConfig;
+    if (!cfg || !cfg.enabled) {
+      toastTimer = setTimeout(triggerToast, 5000);
+      return;
+    }
 
-    const toast = document.createElement('div');
-    toast.className = "toast-slide-in pointer-events-auto flex items-center gap-3 p-3 rounded-2xl border border-white/10 bg-[#0e0a17]/95 shadow-2xl backdrop-blur-md text-xs text-white max-w-xs";
-    toast.innerHTML = `
-      <div class="w-8 h-8 rounded-xl bg-brand-primary/20 border border-brand-primary/40 flex items-center justify-center shrink-0">
-        <i data-lucide="shopping-bag" class="w-4 h-4 text-brand-primary"></i>
-      </div>
-      <div class="flex-1 min-w-0">
-        <div class="text-[11px] text-muted-foreground flex items-center justify-between">
-          <span>การสั่งซื้อล่าสุด</span>
-          <span class="text-brand-primary font-bold">฿${random.price}</span>
-        </div>
-        <div class="font-medium truncate text-white">${random.name}</div>
-        <div class="text-[10px] text-muted-foreground truncate">สั่งซื้อ ${random.item}</div>
-      </div>
-    `;
+    let candidateList = [];
+    if (cfg.realOnly) {
+      candidateList = (APP_STATE.purchases || []).map(p => ({
+        name: p.username || "ลูกค้า",
+        item: p.productName || "สินค้า",
+        price: p.price || 0
+      }));
+    } else {
+      const simulated = cfg.buyers || [];
+      const real = (APP_STATE.purchases || []).map(p => ({
+        name: p.username || "ลูกค้า",
+        item: p.productName || "สินค้า",
+        price: p.price || 0
+      }));
+      candidateList = [...simulated, ...real];
+    }
 
-    stack.appendChild(toast);
-    if (window.lucide) lucide.createIcons();
+    if (candidateList.length === 0) {
+      toastTimer = setTimeout(triggerToast, 6000);
+      return;
+    }
 
-    setTimeout(() => {
-      toast.classList.replace('toast-slide-in', 'toast-slide-out');
-      setTimeout(() => toast.remove(), 350);
-    }, 4500);
+    const random = candidateList[Math.floor(Math.random() * candidateList.length)];
+    renderPurchaseToast(random);
 
-    const nextInterval = Math.floor(Math.random() * 10000) + 12000;
-    setTimeout(triggerToast, nextInterval);
+    const nextInterval = Math.floor(Math.random() * 8000) + 10000;
+    toastTimer = setTimeout(triggerToast, nextInterval);
   }
 
-  setTimeout(triggerToast, 4000);
+  toastTimer = setTimeout(triggerToast, 3500);
+}
+
+function renderPurchaseToast(data) {
+  const stack = document.getElementById('toast-stack');
+  if (!stack) return;
+
+  const toast = document.createElement('div');
+  toast.className = "toast-slide-in pointer-events-auto flex items-center gap-3 p-3 rounded-2xl border border-white/10 bg-[#0e0a17]/95 shadow-2xl backdrop-blur-md text-xs text-white max-w-xs";
+  toast.innerHTML = `
+    <div class="w-8 h-8 rounded-xl bg-brand-primary/20 border border-brand-primary/40 flex items-center justify-center shrink-0">
+      <i data-lucide="shopping-bag" class="w-4 h-4 text-brand-primary"></i>
+    </div>
+    <div class="flex-1 min-w-0">
+      <div class="text-[11px] text-muted-foreground flex items-center justify-between">
+        <span>การสั่งซื้อล่าสุด</span>
+        <span class="text-brand-primary font-bold">฿${data.price}</span>
+      </div>
+      <div class="font-medium truncate text-white">${data.name}</div>
+      <div class="text-[10px] text-muted-foreground truncate">สั่งซื้อ ${data.item}</div>
+    </div>
+  `;
+
+  stack.appendChild(toast);
+  if (window.lucide) lucide.createIcons();
+
+  setTimeout(() => {
+    toast.classList.replace('toast-slide-in', 'toast-slide-out');
+    setTimeout(() => toast.remove(), 350);
+  }, 4500);
+}
+
+// Admin: Populate Recent Buyers UI
+function populateAdminRecentBuyers() {
+  const cfg = APP_STATE.recentBuyersConfig;
+  if (!cfg) return;
+
+  const enabledCheck = document.getElementById('admin-toast-enabled');
+  if (enabledCheck) enabledCheck.checked = !!cfg.enabled;
+
+  const realOnlyCheck = document.getElementById('admin-toast-realonly');
+  if (realOnlyCheck) realOnlyCheck.checked = !!cfg.realOnly;
+
+  const countBadge = document.getElementById('admin-toast-count');
+  if (countBadge) countBadge.textContent = (cfg.buyers || []).length;
+
+  const container = document.getElementById('admin-toast-buyers-list');
+  if (!container) return;
+
+  const buyers = cfg.buyers || [];
+  if (buyers.length === 0) {
+    container.innerHTML = `
+      <div class="py-4 text-center text-gray-500 text-xs">
+        ไม่มีรายชื่อคนซื้อในรายการ (ป๊อปอัปจะไม่เด้ง สามารถกดปุ่มรีเซ็ตหรือเพิ่มชื่อใหม่ได้)
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = buyers.map((b, idx) => `
+    <div class="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/5 hover:border-purple-500/30 transition-colors text-xs">
+      <div class="flex items-center gap-2 overflow-hidden">
+        <span class="text-[10px] text-gray-500 font-mono w-5">#${idx + 1}</span>
+        <span class="font-bold text-white truncate">${b.name}</span>
+        <span class="text-[11px] text-gray-400 truncate">สั่งซื้อ ${b.item}</span>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <span class="text-xs font-bold text-brand-primary font-mono">฿${b.price}</span>
+        <button onclick="deleteRecentBuyer(${idx})" title="ลบรายการนี้" class="p-1 rounded hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-colors">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+    </div>
+  `).join('');
+
+  if (window.lucide) lucide.createIcons();
+}
+
+// Admin: Reset to default buyers
+function resetRecentBuyersToDefault() {
+  APP_STATE.recentBuyersConfig.buyers = JSON.parse(JSON.stringify(DEFAULT_RECENT_BUYERS));
+  APP_STATE.recentBuyersConfig.enabled = true;
+  APP_STATE.recentBuyersConfig.realOnly = false;
+  localStorage.setItem('px_recent_buyers_config', JSON.stringify(APP_STATE.recentBuyersConfig));
+  populateAdminRecentBuyers();
+  showNotification('รีเซ็ตรายชื่อคนซื้อล่าสุดเป็นค่าเริ่มต้นเรียบร้อยแล้ว!', 'success');
+}
+
+// Admin: Clear all buyers
+function clearAllRecentBuyers() {
+  APP_STATE.recentBuyersConfig.buyers = [];
+  localStorage.setItem('px_recent_buyers_config', JSON.stringify(APP_STATE.recentBuyersConfig));
+  populateAdminRecentBuyers();
+  showNotification('ล้างรายชื่อคนซื้อล่าสุดทั้งหมดเรียบร้อยแล้ว (ป๊อปอัปจะไม่เด้ง)', 'info');
+}
+
+// Admin: Update toggles
+function updateRecentBuyersConfig() {
+  const enabled = document.getElementById('admin-toast-enabled')?.checked ?? true;
+  const realOnly = document.getElementById('admin-toast-realonly')?.checked ?? false;
+  APP_STATE.recentBuyersConfig.enabled = enabled;
+  APP_STATE.recentBuyersConfig.realOnly = realOnly;
+  localStorage.setItem('px_recent_buyers_config', JSON.stringify(APP_STATE.recentBuyersConfig));
+  showNotification('บันทึกการตั้งค่าการแจ้งเตือนแล้ว', 'success');
+}
+
+// Admin: Add new buyer
+function addNewRecentBuyer(e) {
+  e.preventDefault();
+  const name = document.getElementById('admin-toast-new-name').value.trim();
+  const item = document.getElementById('admin-toast-new-item').value.trim();
+  const price = parseFloat(document.getElementById('admin-toast-new-price').value) || 0;
+  if (!name || !item) return;
+
+  if (!APP_STATE.recentBuyersConfig.buyers) APP_STATE.recentBuyersConfig.buyers = [];
+  APP_STATE.recentBuyersConfig.buyers.unshift({ name, item, price });
+  localStorage.setItem('px_recent_buyers_config', JSON.stringify(APP_STATE.recentBuyersConfig));
+
+  document.getElementById('admin-toast-new-name').value = '';
+  document.getElementById('admin-toast-new-item').value = '';
+  document.getElementById('admin-toast-new-price').value = '';
+  populateAdminRecentBuyers();
+  showNotification(`เพิ่ม ${name} ในรายการคนซื้อล่าสุดแล้ว`, 'success');
+}
+
+// Admin: Delete buyer
+function deleteRecentBuyer(idx) {
+  if (!APP_STATE.recentBuyersConfig.buyers) return;
+  APP_STATE.recentBuyersConfig.buyers.splice(idx, 1);
+  localStorage.setItem('px_recent_buyers_config', JSON.stringify(APP_STATE.recentBuyersConfig));
+  populateAdminRecentBuyers();
+  showNotification('ลบรายการคนซื้อแล้ว', 'info');
+}
+
+// Admin: Test toast
+function triggerRecentBuyerTestToast() {
+  const list = APP_STATE.recentBuyersConfig.buyers || DEFAULT_RECENT_BUYERS;
+  const item = list.length > 0 ? list[Math.floor(Math.random() * list.length)] : { name: "ตัวอย่างผู้ซื้อ", item: "NEXUS V.2", price: 115 };
+  renderPurchaseToast(item);
+  showNotification('ทดสอบเด้งการแจ้งเตือนคนซื้อล่าสุดแล้ว!', 'info');
+}
+
+// Admin: Reset all store orders
+function resetAllStoreOrders() {
+  if (!confirm('ยืนยันที่จะล้างประวัติคำสั่งซื้อทั้งหมดในระบบใช่หรือไม่?')) return;
+  APP_STATE.purchases = [];
+  localStorage.setItem('px_orders', JSON.stringify(APP_STATE.purchases));
+  renderAdminOrders();
+  renderHistory();
+  showNotification('ล้างประวัติคำสั่งซื้อทั้งหมดในระบบเรียบร้อยแล้ว', 'info');
 }
 
 // ==========================================
