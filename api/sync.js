@@ -356,6 +356,28 @@ module.exports = async (req, res) => {
       return res.status(404).json({ success: false, message: 'ไม่พบผู้ใช้ในระบบ' });
     }
 
+    // 7.5 CHANGE PASSWORD (ADMIN PRIVILEGE)
+    if (action === 'change_password') {
+      const { username, newPassword } = payload || {};
+      if (!username || !newPassword) {
+        return res.status(400).json({ success: false, message: 'กรุณาระบุชื่อผู้ใช้และรหัสผ่านใหม่' });
+      }
+
+      const user = db.users.find(u => u.username === username);
+      if (!user) {
+        return res.status(404).json({ success: false, message: 'ไม่พบผู้ใช้ในระบบ' });
+      }
+
+      user.password = String(newPassword).trim();
+      await updateGistData(db);
+      return res.status(200).json({
+        success: true,
+        message: `เปลี่ยนรหัสผ่านของ ${username} เรียบร้อยแล้ว`,
+        user: user,
+        users: db.users
+      });
+    }
+
     // 8. REAL-TIME PURCHASE ORDER & LIVE STATS AUTOMATION
     if (action === 'purchase') {
       const { order, username, newBalance, productId, productStock, productSold, updatedStats, buyerItem } = payload || {};

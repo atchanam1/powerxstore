@@ -2526,6 +2526,9 @@ function renderAdminUsers() {
             <button onclick="copyToClipboard('${u.password}')" title="คัดลอกรหัสผ่าน" class="p-1 rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors">
               <i data-lucide="copy" class="w-3.5 h-3.5"></i>
             </button>
+            <button onclick="openChangePasswordModal('${u.username}')" title="เปลี่ยนรหัสผ่าน (สิทธิ์แอดมิน)" class="p-1 rounded hover:bg-purple-500/20 text-purple-400 hover:text-purple-300 transition-colors">
+              <i data-lucide="key" class="w-3.5 h-3.5"></i>
+            </button>
           </div>
         </td>
         <td class="py-3 px-4">
@@ -2541,6 +2544,10 @@ function renderAdminUsers() {
           <button onclick="openUserDetailsModal('${u.username}')" class="px-2.5 py-1 rounded-lg bg-brand-primary/20 border border-brand-primary/40 text-brand-primary hover:bg-brand-primary/30 text-xs font-semibold inline-flex items-center gap-1 transition-all">
             <i data-lucide="eye" class="w-3 h-3"></i>
             <span>ดูประวัติ</span>
+          </button>
+          <button onclick="openChangePasswordModal('${u.username}')" class="px-2.5 py-1 rounded-lg bg-purple-500/20 border border-purple-500/40 text-purple-300 hover:bg-purple-500/30 text-xs font-semibold inline-flex items-center gap-1 transition-all" title="เปลี่ยนรหัสผ่าน (สิทธิ์แอดมิน)">
+            <i data-lucide="key" class="w-3 h-3"></i>
+            <span>เปลี่ยนรหัส</span>
           </button>
           <button onclick="unbanUser('${u.username}')" class="px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30 text-xs font-semibold inline-flex items-center gap-1 transition-all shadow-sm">
             <i data-lucide="check-circle" class="w-3 h-3"></i>
@@ -2578,6 +2585,9 @@ function renderAdminUsers() {
             <button onclick="copyToClipboard('${u.password}')" title="คัดลอกรหัสผ่าน" class="p-1 rounded hover:bg-white/10 text-gray-400 hover:text-brand-primary transition-colors">
               <i data-lucide="copy" class="w-3.5 h-3.5"></i>
             </button>
+            <button onclick="openChangePasswordModal('${u.username}')" title="เปลี่ยนรหัสผ่าน (สิทธิ์แอดมิน)" class="p-1 rounded hover:bg-purple-500/20 text-purple-400 hover:text-purple-300 transition-colors">
+              <i data-lucide="key" class="w-3.5 h-3.5"></i>
+            </button>
           </div>
         </td>
         <td class="py-3 px-4">
@@ -2599,6 +2609,10 @@ function renderAdminUsers() {
           <button onclick="openUserDetailsModal('${u.username}')" class="px-2.5 py-1 rounded-lg bg-brand-primary/20 border border-brand-primary/40 text-brand-primary hover:bg-brand-primary/30 text-xs font-semibold inline-flex items-center gap-1 transition-all">
             <i data-lucide="eye" class="w-3 h-3"></i>
             <span>ดูประวัติ</span>
+          </button>
+          <button onclick="openChangePasswordModal('${u.username}')" class="px-2.5 py-1 rounded-lg bg-purple-500/15 border border-purple-500/35 text-purple-300 hover:bg-purple-500/25 text-xs font-semibold inline-flex items-center gap-1 transition-all" title="เปลี่ยนรหัสผ่าน (สิทธิ์แอดมิน)">
+            <i data-lucide="key" class="w-3 h-3"></i>
+            <span>เปลี่ยนรหัส</span>
           </button>
           <button onclick="openBalanceModal('${u.username}')" class="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 text-xs transition-colors" title="ปรับยอดเงิน / กำหนดเงิน">
             ปรับเงิน
@@ -2812,13 +2826,146 @@ function switchUserDetailTab(tab) {
   if (window.lucide) lucide.createIcons();
 }
 
+// ==========================================
+// ADMIN EXCLUSIVE: PASSWORD MANAGEMENT SYSTEM
+// ==========================================
+let activeChangePwdUsername = null;
+
+function openChangePasswordModal(username) {
+  if (!APP_STATE.currentUser || APP_STATE.currentUser.role !== 'Admin') {
+    showNotification('⛔ สิทธิ์ปฏิเสธ: เฉพาะผู้ใช้งานยศแอดมินเท่านั้นที่มีสิทธิ์เปลี่ยนรหัสผ่าน', 'error');
+    return;
+  }
+
+  const user = APP_STATE.users.find(u => u.username === username);
+  if (!user) {
+    showNotification('ไม่พบผู้ใช้งานนี้ในระบบ', 'error');
+    return;
+  }
+
+  activeChangePwdUsername = username;
+  const userEl = document.getElementById('admin-pwd-modal-username');
+  if (userEl) userEl.textContent = user.username;
+  
+  const currEl = document.getElementById('admin-pwd-modal-current');
+  if (currEl) currEl.textContent = user.password || '(ยังไม่ตั้งรหัส)';
+
+  const badge = document.getElementById('admin-pwd-modal-role-badge');
+  if (badge) {
+    badge.textContent = user.role;
+    badge.className = user.role === 'Admin'
+      ? 'ml-1 text-[9px] px-2 py-0.5 rounded font-bold bg-brand-primary text-white shadow-sm'
+      : 'ml-1 text-[9px] px-2 py-0.5 rounded font-bold bg-white/10 text-gray-300';
+  }
+
+  const newInp = document.getElementById('admin-pwd-modal-new');
+  if (newInp) newInp.value = '';
+  
+  const confInp = document.getElementById('admin-pwd-modal-confirm');
+  if (confInp) confInp.value = '';
+
+  const modal = document.getElementById('admin-change-password-modal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    if (window.lucide) lucide.createIcons();
+  }
+}
+
+function closeChangePasswordModal() {
+  const modal = document.getElementById('admin-change-password-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+  activeChangePwdUsername = null;
+}
+
+function copyCurrentModalPassword() {
+  const txt = document.getElementById('admin-pwd-modal-current')?.textContent;
+  if (txt && txt !== '(ยังไม่ตั้งรหัส)') {
+    copyToClipboard(txt);
+  }
+}
+
+function generateRandomAdminPassword() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
+  let randPass = '';
+  for (let i = 0; i < 10; i++) {
+    randPass += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  const inputNew = document.getElementById('admin-pwd-modal-new');
+  const inputConfirm = document.getElementById('admin-pwd-modal-confirm');
+  if (inputNew && inputConfirm) {
+    inputNew.value = randPass;
+    inputConfirm.value = randPass;
+    showNotification(`สุ่มสร้างรหัสผ่านใหม่: ${randPass}`, 'info');
+  }
+}
+
+function handleSavePasswordFromAdmin(e) {
+  if (e && e.preventDefault) e.preventDefault();
+
+  if (!APP_STATE.currentUser || APP_STATE.currentUser.role !== 'Admin') {
+    showNotification('⛔ สิทธิ์ปฏิเสธ: เฉพาะผู้ใช้งานยศแอดมินเท่านั้นที่มีสิทธิ์เปลี่ยนรหัสผ่าน', 'error');
+    return;
+  }
+
+  if (!activeChangePwdUsername) return;
+
+  const newPass = document.getElementById('admin-pwd-modal-new').value.trim();
+  const confirmPass = document.getElementById('admin-pwd-modal-confirm').value.trim();
+
+  if (!newPass) {
+    showNotification('กรุณากรอกรหัสผ่านใหม่', 'warning');
+    return;
+  }
+
+  if (newPass.length < 4) {
+    showNotification('รหัสผ่านต้องมีความยาวอย่างน้อย 4 ตัวอักษร', 'warning');
+    return;
+  }
+
+  if (newPass !== confirmPass) {
+    showNotification('รหัสผ่านใหม่และการยืนยันรหัสผ่านไม่ตรงกัน', 'error');
+    return;
+  }
+
+  const user = APP_STATE.users.find(u => u.username === activeChangePwdUsername);
+  if (!user) {
+    showNotification('ไม่พบผู้ใช้ในระบบ', 'error');
+    return;
+  }
+
+  user.password = newPass;
+  localStorage.setItem('px_users', JSON.stringify(APP_STATE.users));
+
+  // If changing logged in user's password, update current user session
+  if (APP_STATE.currentUser && APP_STATE.currentUser.username === activeChangePwdUsername) {
+    APP_STATE.currentUser.password = newPass;
+    localStorage.setItem('px_currentUser', JSON.stringify(APP_STATE.currentUser));
+  }
+
+  // Cloud sync to Serverless function and GitHub Gist DB
+  cloudSyncAction('change_password', { username: activeChangePwdUsername, newPassword: newPass });
+
+  renderAdminUsers();
+  closeChangePasswordModal();
+  showNotification(`🔑 เปลี่ยนรหัสผ่านของ "${activeChangePwdUsername}" เป็น "${newPass}" สำเร็จและบันทึกสู่ระบบคลาวด์แล้ว!`, 'success');
+}
+
 function saveUserPasswordFromModal() {
+  if (!APP_STATE.currentUser || APP_STATE.currentUser.role !== 'Admin') {
+    showNotification('⛔ เฉพาะผู้ใช้งานยศแอดมินเท่านั้นที่มีสิทธิ์เปลี่ยนรหัสผ่าน', 'error');
+    return;
+  }
+
   if (!activeDetailUsername) return;
   const passInput = document.getElementById('ud-modal-password');
   const newPass = passInput ? passInput.value.trim() : '';
 
-  if (!newPass) {
-    showNotification('รหัสผ่านต้องไม่ว่างเปล่า', 'error');
+  if (!newPass || newPass.length < 4) {
+    showNotification('รหัสผ่านต้องมีความยาวอย่างน้อย 4 ตัวอักษร', 'error');
     return;
   }
 
@@ -2832,6 +2979,7 @@ function saveUserPasswordFromModal() {
       localStorage.setItem('px_currentUser', JSON.stringify(APP_STATE.currentUser));
     }
 
+    cloudSyncAction('change_password', { username: activeDetailUsername, newPassword: newPass });
     renderAdminUsers();
     showNotification(`อัปเดตรหัสผ่านของ ${activeDetailUsername} เป็น "${newPass}" สำเร็จ!`, 'success');
   }
