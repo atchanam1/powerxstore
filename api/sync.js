@@ -31,10 +31,12 @@ const DEFAULT_USERS = [
 
 async function getGistData() {
   try {
-    const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+    const res = await fetch(`https://api.github.com/gists/${GIST_ID}?t=${Date.now()}`, {
+      cache: 'no-store',
       headers: {
         'Accept': 'application/vnd.github.v3+json',
         'Authorization': `Bearer ${GH_TOKEN}`,
+        'Cache-Control': 'no-cache, no-store',
         'User-Agent': 'PowerXStore-Sync/1.0'
       }
     });
