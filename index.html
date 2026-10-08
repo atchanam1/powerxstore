@@ -1,0 +1,1965 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>POWERXSTORE — ร้านค้าจำหน่ายสินค้าดิจิทัลและบริการ FiveM</title>
+  <meta name="description" content="ยินดีต้อนรับสู่ POWERXSTORE ศูนย์รวมบริการระดับพรีเมียม โปรแกรมช่วยเล่น Fivem / ปลดแบน Fivem คุณภาพสูง ปลอดภัย 100%" />
+  
+  <!-- OpenGraph & Twitter Meta -->
+  <meta property="og:title" content="POWERXSTORE" />
+  <meta property="og:description" content="ศูนย์รวมบริการระดับพรีเมียม โปรแกรมช่วยเล่น Fivem / ปลดแบน Fivem ราคาถูกและปลอดภัย" />
+  <meta property="og:site_name" content="POWERXSTORE" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="POWERXSTORE" />
+  <meta name="twitter:description" content="ศูนย์รวมบริการระดับพรีเมียม โปรแกรมช่วยเล่น Fivem / ปลดแบน Fivem" />
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="64x64" href="assets/favicon.png?v=20261009_v2" />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=20261009_v2" />
+  <link rel="shortcut icon" href="assets/favicon.png?v=20261009_v2" />
+  <link rel="apple-touch-icon" href="assets/favicon.png?v=20261009_v2" />
+  
+  <!-- Google Fonts: Prompt & Kanit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            'brand-primary': '#A855F7',
+            'brand-secondary': '#7E22CE',
+            'brand-accent': '#C084FC',
+            'dark-bg': '#060509',
+            'dark-surface': '#0e0a17',
+            'dark-card': '#140f22'
+          },
+          fontFamily: {
+            sans: ['Prompt', 'sans-serif'],
+            kanit: ['Kanit', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body class="bg-[#060509] text-[#f3f4f6] min-h-screen flex flex-col font-sans relative selection:bg-brand-primary/30 selection:text-brand-accent">
+
+  <!-- Interactive Particles Canvas Background -->
+  <canvas id="particle-canvas" class="fixed inset-0 pointer-events-none z-0 opacity-40"></canvas>
+
+  <!-- Radial Background Lighting Orbs (Dark Purple) -->
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
+    <div class="absolute -top-32 -left-32 w-[600px] h-[600px] bg-purple-600/15 rounded-full blur-[140px]"></div>
+    <div class="absolute top-1/3 -right-32 w-[550px] h-[550px] bg-purple-900/20 rounded-full blur-[160px]"></div>
+    <div class="absolute bottom-10 left-1/4 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[130px]"></div>
+  </div>
+
+  <!-- WELCOME INTRO OVERLAY -->
+  <div id="welcome-intro" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/95 backdrop-blur-xl px-4 transition-all duration-500">
+    <div class="max-w-md w-full text-center space-y-6 relative z-10 animate-float">
+      <!-- Glowing Logo Emblem (Borderless & Frame-free) -->
+      <div class="relative inline-flex items-center justify-center w-28 h-28 mx-auto group">
+        <div class="absolute inset-0 rounded-full bg-brand-primary/25 blur-2xl opacity-70 group-hover:opacity-100 transition-opacity"></div>
+        <img id="welcome-intro-logo" src="assets/logo.png?v=20261009_v2" alt="POWERXSTORE" class="w-24 h-24 object-contain relative z-10 drop-shadow-[0_0_20px_rgba(168,85,247,0.9)] select-none" style="mix-blend-mode: screen;" />
+      </div>
+
+      <!-- Intro Text -->
+      <div class="space-y-2">
+        <h1 class="text-3xl sm:text-4xl font-bold tracking-tight">
+          ยินดีต้อนรับสู่ <span class="brand-gradient-text">POWERXSTORE</span>
+        </h1>
+        <p class="text-xs sm:text-sm text-gray-400 max-w-sm mx-auto leading-relaxed font-light">
+          ศูนย์รวมบริการระดับพรีเมียม โปรแกรมช่วยเล่น Fivem / ปลดแบน Fivem ราคาถูก ปลอดภัย และเสถียรที่สุด
+        </p>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+        <button onclick="dismissIntro()" class="w-full sm:w-auto brand-btn-primary px-7 py-3 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-brand-primary/20">
+          <i data-lucide="external-link" class="w-4 h-4"></i>
+          <span>เข้าสู่เว็บไซต์</span>
+        </button>
+        <button onclick="dismissIntro(); switchTab('store');" class="w-full sm:w-auto bg-white/10 hover:bg-white/15 px-6 py-3 rounded-2xl text-white font-medium text-sm transition-all border border-white/10 flex items-center justify-center gap-2">
+          <i data-lucide="store" class="w-4 h-4 text-brand-primary"></i>
+          <span>ดูสินค้าทั้งหมด</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOP ANNOUNCEMENT BAR -->
+  <div class="relative z-30 bg-gradient-to-r from-brand-primary/10 via-brand-secondary/15 to-brand-primary/10 border-b border-purple-500/20 text-xs py-2 px-4 text-center">
+    <div class="max-w-7xl mx-auto flex items-center justify-center gap-2">
+      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-primary text-white">ประกาศ</span>
+      <span id="topbar-announcement-text" class="text-gray-200">โปรแกรมมีปัญหาหรือต้องการความช่วยเหลือ ติดต่อทีมงานได้ที่ Discord ตลอด 24 ชั่วโมง !!</span>
+    </div>
+  </div>
+
+  <!-- STICKY CAPSULE HEADER / NAVBAR -->
+  <header class="sticky top-0 z-40 w-full backdrop-blur-xl bg-[#060509]/85 border-b border-purple-500/15">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      
+      <!-- Brand Logo & Name -->
+      <a href="#" data-tab-target="home" class="flex items-center gap-2.5 focus:outline-none group">
+        <div class="w-9 h-9 flex items-center justify-center p-0.5 group-hover:scale-110 transition-transform">
+          <img id="navbar-brand-logo" src="assets/logo.png?v=20261009_v2" alt="POWERXSTORE Logo" class="w-full h-full object-contain drop-shadow-[0_0_10px_#A855F7]" style="mix-blend-mode: screen;" />
+        </div>
+        <div class="flex flex-col">
+          <span class="font-extrabold text-base sm:text-lg tracking-wider text-white group-hover:text-brand-primary transition-colors flex items-center gap-1">
+            POWERX<span class="text-brand-primary">STORE</span>
+          </span>
+          <span class="text-[9px] text-gray-400 font-mono -mt-1 tracking-widest uppercase">Premium Store</span>
+        </div>
+      </a>
+
+      <!-- Desktop Nav Menu -->
+      <nav class="hidden md:flex items-center gap-1 bg-white/5 px-2 py-1 rounded-full border border-white/10 backdrop-blur-md shadow-inner">
+        <a href="#" data-tab-target="home" class="nav-item-link flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs transition-all text-brand-primary font-medium">
+          <span class="nav-icon-slot w-5 h-5 rounded-full flex items-center justify-center text-xs">
+            <i data-lucide="home" class="w-3.5 h-3.5"></i>
+          </span>
+          <span>หน้าหลัก</span>
+        </a>
+        <a href="#" data-tab-target="store" class="nav-item-link flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs transition-all text-muted-foreground hover:text-white">
+          <span class="nav-icon-slot w-5 h-5 rounded-full flex items-center justify-center text-xs">
+            <i data-lucide="store" class="w-3.5 h-3.5"></i>
+          </span>
+          <span>ร้านค้า</span>
+        </a>
+        <a href="#" data-tab-target="topup" class="nav-item-link flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs transition-all text-muted-foreground hover:text-white">
+          <span class="nav-icon-slot w-5 h-5 rounded-full flex items-center justify-center text-xs">
+            <i data-lucide="wallet" class="w-3.5 h-3.5"></i>
+          </span>
+          <span>เติมเงิน</span>
+        </a>
+        <a href="#" data-tab-target="history" class="nav-item-link flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs transition-all text-muted-foreground hover:text-white">
+          <span class="nav-icon-slot w-5 h-5 rounded-full flex items-center justify-center text-xs">
+            <i data-lucide="history" class="w-3.5 h-3.5"></i>
+          </span>
+          <span>ประวัติสั่งซื้อ</span>
+        </a>
+        <a href="#" data-tab-target="resethwid" class="nav-item-link flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs transition-all text-muted-foreground hover:text-white">
+          <span class="nav-icon-slot w-5 h-5 rounded-full flex items-center justify-center text-xs">
+            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+          </span>
+          <span>Reset HWID</span>
+        </a>
+        <!-- Admin Backoffice Shortcut (Visible for Admin) -->
+        <a href="#" data-tab-target="admin" class="nav-admin-link nav-item-link hidden flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs transition-all text-pink-400 hover:text-white font-medium bg-pink-500/10 border border-pink-500/20">
+          <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i>
+          <span>หลังบ้าน</span>
+        </a>
+      </nav>
+
+      <!-- Right Action Tools -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Contact Modal Trigger -->
+        <button onclick="openContactModal()" type="button" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand-primary/10 border border-purple-500/30 text-brand-primary hover:bg-brand-primary/20 transition-colors text-xs font-medium">
+          <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+          <span>ติดต่อเรา</span>
+        </button>
+
+        <!-- Discord Button -->
+        <a href="https://discord.gg/invite/powerxstore" target="_blank" rel="noopener noreferrer" title="เข้าร่วม Discord" class="discord-link-target w-8 h-8 rounded-full bg-white/5 border border-white/10 hover:border-[#5865F2] hover:text-[#5865F2] flex items-center justify-center transition-colors text-gray-300">
+          <svg viewBox="0 0 24 24" class="w-4 h-4 fill-currentColor">
+            <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.074.074 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.334-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.334-.946 2.418-2.157 2.418z"/>
+          </svg>
+        </a>
+
+        <!-- Dark / Light Theme Switcher -->
+        <button onclick="toggleTheme()" type="button" title="สลับธีม สว่าง/มืด" class="w-8 h-8 rounded-full bg-white/5 border border-white/10 hover:border-brand-primary/40 flex items-center justify-center transition-colors text-gray-300">
+          <i id="theme-icon-moon" data-lucide="moon" class="w-4 h-4"></i>
+          <i id="theme-icon-sun" data-lucide="sun" class="w-4 h-4 hidden text-yellow-400"></i>
+        </button>
+
+        <!-- AUTH STATE: GUEST (Not logged in) -->
+        <div id="nav-auth-guest" class="flex items-center gap-1.5">
+          <button onclick="openAuthModal('login')" class="px-3 py-1.5 rounded-full text-xs text-gray-300 hover:text-white bg-white/5 border border-white/10 transition-colors">
+            เข้าสู่ระบบ
+          </button>
+          <button onclick="openAuthModal('register')" class="brand-btn-primary px-3 py-1.5 rounded-full text-xs font-semibold">
+            สมัครสมาชิก
+          </button>
+        </div>
+
+        <!-- AUTH STATE: LOGGED IN USER -->
+        <div id="nav-auth-user" class="hidden relative flex items-center gap-2">
+          
+          <!-- Wallet Balance Badge -->
+          <div onclick="switchTab('topup')" title="คลิกเพื่อเติมเงิน" class="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-white/10 px-2.5 sm:px-3 py-1.5 rounded-full cursor-pointer transition-all shadow-sm">
+            <div class="w-4 h-4 rounded-full bg-brand-primary/20 flex items-center justify-center text-brand-primary">
+              <i data-lucide="wallet" class="w-2.5 h-2.5"></i>
+            </div>
+            <span class="text-xs font-bold text-brand-primary user-balance-display">฿0.00</span>
+          </div>
+
+          <!-- User Profile Trigger & Dropdown -->
+          <div id="user-profile-trigger" onclick="toggleUserDropdown()" class="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-white/10 px-2.5 py-1.5 rounded-full cursor-pointer transition-all">
+            <div class="w-5 h-5 rounded-full bg-gradient-to-tr from-brand-secondary to-brand-primary flex items-center justify-center text-white text-[10px] font-bold">
+              <i data-lucide="user" class="w-3 h-3"></i>
+            </div>
+            <span class="text-xs font-medium text-white user-name-display truncate max-w-[80px]">User</span>
+            <span class="user-role-badge">Member</span>
+            <i data-lucide="chevron-down" class="w-3 h-3 text-gray-400"></i>
+          </div>
+
+          <!-- Dropdown Menu -->
+          <div id="user-profile-dropdown" class="hidden absolute right-0 top-11 w-48 bg-[#0e0a17] border border-white/10 rounded-2xl shadow-2xl p-2 space-y-1 z-50">
+            <div class="px-3 py-2 border-b border-white/10">
+              <div class="text-xs font-bold text-white user-name-display">Username</div>
+              <div class="text-[10px] text-brand-primary user-balance-display">฿0.00</div>
+            </div>
+            
+            <button onclick="switchTab('topup'); toggleUserDropdown();" class="w-full text-left px-3 py-2 text-xs text-gray-300 hover:text-white hover:bg-white/5 rounded-xl flex items-center gap-2">
+              <i data-lucide="wallet" class="w-3.5 h-3.5 text-brand-primary"></i>
+              <span>กระเป๋าเงิน / เติมเงิน</span>
+            </button>
+            <button onclick="switchTab('history'); toggleUserDropdown();" class="w-full text-left px-3 py-2 text-xs text-gray-300 hover:text-white hover:bg-white/5 rounded-xl flex items-center gap-2">
+              <i data-lucide="history" class="w-3.5 h-3.5 text-brand-primary"></i>
+              <span>ประวัติการสั่งซื้อ</span>
+            </button>
+            <button onclick="switchTab('admin'); toggleUserDropdown();" class="nav-admin-link hidden w-full text-left px-3 py-2 text-xs text-pink-400 hover:text-white hover:bg-pink-500/10 rounded-xl flex items-center gap-2 font-medium">
+              <i data-lucide="shield" class="w-3.5 h-3.5 text-pink-400"></i>
+              <span>แผงควบคุมแอดมิน</span>
+            </button>
+            <div class="border-t border-white/10 pt-1">
+              <button onclick="logoutUser(); toggleUserDropdown();" class="w-full text-left px-3 py-2 text-xs text-red-400 hover:bg-red-500/10 rounded-xl flex items-center gap-2">
+                <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                <span>ออกจากระบบ</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Mobile Menu Toggle Button -->
+        <button id="nav-mobile-toggle" type="button" class="md:hidden w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-300 hover:text-white">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MOBILE SLIDE-OUT DRAWER -->
+  <div id="mobile-drawer" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden md:hidden">
+    <div class="fixed right-0 top-0 bottom-0 w-64 bg-[#0e0a17] border-l border-white/10 p-6 flex flex-col justify-between shadow-2xl">
+      <div class="space-y-6">
+        <div class="flex items-center justify-between pb-4 border-b border-white/10">
+          <div class="flex items-center gap-2">
+            <img id="mobile-brand-logo" src="assets/logo.png?v=20261009_v2" class="w-7 h-7 object-contain" alt="Logo" style="mix-blend-mode: screen;" />
+            <span class="font-bold text-sm text-white">POWERXSTORE</span>
+          </div>
+          <button onclick="closeMobileMenu()" class="text-gray-400 hover:text-white p-1">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <nav class="space-y-1">
+          <a href="#" data-tab-target="home" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-300 hover:text-brand-primary hover:bg-white/5">
+            <i data-lucide="home" class="w-4 h-4 text-brand-primary"></i>
+            <span>หน้าหลัก</span>
+          </a>
+          <a href="#" data-tab-target="store" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-300 hover:text-brand-primary hover:bg-white/5">
+            <i data-lucide="store" class="w-4 h-4 text-brand-primary"></i>
+            <span>ร้านค้า</span>
+          </a>
+          <a href="#" data-tab-target="topup" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-300 hover:text-brand-primary hover:bg-white/5">
+            <i data-lucide="wallet" class="w-4 h-4 text-brand-primary"></i>
+            <span>เติมเงิน</span>
+          </a>
+          <a href="#" data-tab-target="history" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-300 hover:text-brand-primary hover:bg-white/5">
+            <i data-lucide="history" class="w-4 h-4 text-brand-primary"></i>
+            <span>ประวัติการสั่งซื้อ</span>
+          </a>
+          <a href="#" data-tab-target="resethwid" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-300 hover:text-brand-primary hover:bg-white/5">
+            <i data-lucide="rotate-ccw" class="w-4 h-4 text-brand-primary"></i>
+            <span>Reset HWID</span>
+          </a>
+          <a href="#" data-tab-target="admin" class="nav-admin-link hidden flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-pink-400 bg-pink-500/10 border border-pink-500/20 font-medium">
+            <i data-lucide="shield" class="w-4 h-4 text-pink-400"></i>
+            <span>แผงควบคุมแอดมิน</span>
+          </a>
+        </nav>
+      </div>
+
+      <div class="space-y-3 pt-6 border-t border-white/10">
+        <button onclick="openContactModal(); closeMobileMenu();" class="w-full py-2.5 px-4 rounded-xl bg-brand-primary/10 border border-purple-500/30 text-brand-primary text-xs font-semibold flex items-center justify-center gap-2">
+          <i data-lucide="message-circle" class="w-4 h-4"></i>
+          <span>ติดต่อทีมงาน</span>
+        </button>
+        <a href="https://discord.gg/invite/powerxstore" target="_blank" class="discord-link-target w-full py-2.5 px-4 rounded-xl bg-[#5865F2] text-white text-xs font-semibold flex items-center justify-center gap-2">
+          <i data-lucide="disc" class="w-4 h-4"></i>
+          <span>เข้าร่วม Discord</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN APP CONTAINER -->
+  <main class="relative z-10 flex-1 flex flex-col">
+
+    <!-- ==================== TAB: HOME ==================== -->
+    <div id="tab-home" class="tab-content flex-1 flex flex-col">
+      
+      <!-- HERO SECTION -->
+      <section class="relative pt-12 sm:pt-20 pb-16 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        <div class="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-12">
+          
+          <!-- Hero Left: Headlines & CTA -->
+          <div class="flex-1 space-y-6 text-center lg:text-left">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-primary/10 border border-purple-500/30 text-brand-primary text-xs font-medium">
+              <span class="w-2 h-2 rounded-full bg-brand-primary animate-pulse"></span>
+              <span>ระบบอัตโนมัติ 24 ชม. • ปลอดภัย ไร้แบน</span>
+            </div>
+
+            <h1 id="hero-welcome-title" class="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-tight">
+              ยินดีต้อนรับสู่ร้าน <br class="hidden sm:inline" />
+              <span class="brand-gradient-text text-brand-glow">POWERXSTORE</span>.XYZ
+            </h1>
+
+            <p id="hero-welcome-desc" class="text-sm sm:text-base text-gray-400 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-light">
+              ร้านบริการจำหน่ายโปรแกรมช่วยเล่น Fivem / ปลดแบนFivem ราคาถูกและปลอดภัยต่อผู้ใช้ ตอบโจทย์ทุกการใช้งาน ต่างๆ ไม่ว่าจะเป็นโปรแกรม External / Unban / Internal / CMD
+            </p>
+
+            <div class="flex flex-wrap items-center justify-center lg:justify-start gap-3 pt-2">
+              <button onclick="switchTab('store')" class="brand-btn-primary px-7 py-3 rounded-2xl font-semibold text-sm flex items-center gap-2 shadow-lg shadow-brand-primary/20">
+                <i data-lucide="store" class="w-4 h-4"></i>
+                <span>ซื้อเลย</span>
+              </button>
+              <button onclick="switchTab('topup')" class="bg-white/5 hover:bg-white/10 border border-white/15 px-7 py-3 rounded-2xl text-white font-medium text-sm transition-all flex items-center gap-2">
+                <i data-lucide="wallet" class="w-4 h-4 text-brand-primary"></i>
+                <span>เติมเงิน</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Hero Right: Floating Logo Artwork -->
+          <div class="shrink-0 flex items-center justify-center relative">
+            <div class="hero-logo-wrap relative w-48 h-48 sm:w-64 sm:h-64 flex items-center justify-center">
+              <div class="hero-logo-glow absolute inset-0 rounded-full bg-brand-primary/15 blur-2xl"></div>
+              
+              <!-- Orbital Rings -->
+              <div class="absolute inset-0 rounded-full border border-brand-primary/20 orbital-spinner"></div>
+              <div class="absolute inset-4 rounded-full border border-dashed border-brand-accent/20 orbital-spinner-rev"></div>
+
+              <img id="hero-emblem-logo" src="assets/logo.png?v=20261009_v2" alt="POWERXSTORE Emblem" class="w-36 h-36 sm:w-48 sm:h-48 object-contain relative z-10 drop-shadow-[0_0_25px_rgba(168,85,247,0.7)] select-none" style="mix-blend-mode: screen;" />
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- PROMOTIONAL HERO BANNER SLIDER -->
+      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full mb-12">
+        <div class="relative w-full rounded-2xl overflow-hidden border border-white/10 bg-black/40 backdrop-blur-md shadow-2xl group">
+          <div class="relative w-full aspect-[21/9] sm:aspect-[16/6] overflow-hidden">
+            <img id="promo-banner-image" src="assets/banners/banner1.webp?v=20261009" alt="POWERXSTORE Promotional Banner" class="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-[1.02]" />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+            
+            <div class="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 max-w-lg space-y-1">
+              <span class="inline-block px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-brand-primary text-white uppercase tracking-wider">FEATURED</span>
+              <h3 id="promo-banner-title" class="text-base sm:text-2xl font-bold text-white">POWERXSTORE FIVEM SOLUTIONS</h3>
+              <p id="promo-banner-subtitle" class="text-xs text-gray-300 hidden sm:block">มั่นใจในคุณภาพ ปลอดภัย ไร้กังวล ด้วยทีมพัฒนาฝีมือระดับสากล</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIVE STATISTICS COUNTERS BAR -->
+      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full mb-16">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+          
+          <!-- Stat 1: ผู้ใช้งาน -->
+          <div class="stat-card p-4 sm:p-5 rounded-2xl flex items-center gap-4">
+            <span class="stat-sheen"></span>
+            <div class="stat-icon-pulse w-11 h-11 rounded-xl bg-brand-primary/10 border border-purple-500/30 flex items-center justify-center shrink-0 text-brand-primary">
+              <i data-lucide="users" class="w-5 h-5"></i>
+            </div>
+            <div class="min-w-0">
+              <div class="text-[11px] font-medium text-gray-400">ผู้ใช้งาน</div>
+              <div class="flex items-baseline gap-1 mt-0.5">
+                <span id="stat-counter-users" class="text-xl sm:text-2xl font-bold text-brand-primary">4,913</span>
+                <span class="text-[10px] text-gray-500">คน</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stat 2: สินค้า -->
+          <div class="stat-card p-4 sm:p-5 rounded-2xl flex items-center gap-4">
+            <span class="stat-sheen"></span>
+            <div class="stat-icon-pulse w-11 h-11 rounded-xl bg-brand-primary/10 border border-purple-500/30 flex items-center justify-center shrink-0 text-brand-primary">
+              <i data-lucide="package" class="w-5 h-5"></i>
+            </div>
+            <div class="min-w-0">
+              <div class="text-[11px] font-medium text-gray-400">สินค้าทั้งหมด</div>
+              <div class="flex items-baseline gap-1 mt-0.5">
+                <span id="stat-counter-products" class="text-xl sm:text-2xl font-bold text-brand-primary">4</span>
+                <span class="text-[10px] text-gray-500">รายการ</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stat 3: คลังสินค้า -->
+          <div class="stat-card p-4 sm:p-5 rounded-2xl flex items-center gap-4">
+            <span class="stat-sheen"></span>
+            <div class="stat-icon-pulse w-11 h-11 rounded-xl bg-brand-primary/10 border border-purple-500/30 flex items-center justify-center shrink-0 text-brand-primary">
+              <i data-lucide="shield-check" class="w-5 h-5"></i>
+            </div>
+            <div class="min-w-0">
+              <div class="text-[11px] font-medium text-gray-400">คลังสินค้า</div>
+              <div class="flex items-baseline gap-1 mt-0.5">
+                <span id="stat-counter-stock" class="text-xl sm:text-2xl font-bold text-brand-primary">198</span>
+                <span class="text-[10px] text-gray-500">ชิ้น</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stat 4: ขายแล้ว -->
+          <div class="stat-card p-4 sm:p-5 rounded-2xl flex items-center gap-4">
+            <span class="stat-sheen"></span>
+            <div class="stat-icon-pulse w-11 h-11 rounded-xl bg-brand-primary/10 border border-purple-500/30 flex items-center justify-center shrink-0 text-brand-primary">
+              <i data-lucide="check-circle" class="w-5 h-5"></i>
+            </div>
+            <div class="min-w-0">
+              <div class="text-[11px] font-medium text-gray-400">ยอดจำหน่ายแล้ว</div>
+              <div class="flex items-baseline gap-1 mt-0.5">
+                <span id="stat-counter-sold" class="text-xl sm:text-2xl font-bold text-brand-primary">367</span>
+                <span class="text-[10px] text-gray-500">ครั้ง</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- WHY CHOOSE POWERXSTORE SECTION -->
+      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full mb-20">
+        <div class="space-y-6">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+              <span>ทำไมต้องเลือก</span>
+              <span class="brand-gradient-text">POWERXSTORE</span>
+            </h2>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            <div class="p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-brand-primary/40 transition-colors shadow-lg space-y-3">
+              <div class="w-10 h-10 rounded-xl bg-brand-primary/15 border border-purple-500/30 flex items-center justify-center text-brand-primary">
+                <i data-lucide="shield" class="w-5 h-5"></i>
+              </div>
+              <h3 class="font-semibold text-sm text-white">ปลอดภัย รวดเร็ว</h3>
+              <p class="text-xs text-gray-400 leading-relaxed font-light">
+                ใส่ใจในคุณภาพของสินค้าและบริการ ด้วยระบบรักษาความปลอดภัยที่ทันสมัย พร้อมการบริการที่รวดเร็วและเชื่อถือได้ตลอด 24 ชั่วโมง
+              </p>
+            </div>
+
+            <div class="p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-brand-primary/40 transition-colors shadow-lg space-y-3">
+              <div class="w-10 h-10 rounded-xl bg-brand-primary/15 border border-purple-500/30 flex items-center justify-center text-brand-primary">
+                <i data-lucide="headphones" class="w-5 h-5"></i>
+              </div>
+              <h3 class="font-semibold text-sm text-white">บริการลูกค้า 24/7</h3>
+              <p class="text-xs text-gray-400 leading-relaxed font-light">
+                ทีมงานมืออาชีพพร้อมให้คำปรึกษาและแก้ไขปัญหาตลอด 24 ชั่วโมง ด้วยใจที่ใส่ใจในทุกรายละเอียด เพื่อความพึงพอใจสูงสุดของลูกค้า
+              </p>
+            </div>
+
+            <div class="p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-brand-primary/40 transition-colors shadow-lg space-y-3">
+              <div class="w-10 h-10 rounded-xl bg-brand-primary/15 border border-purple-500/30 flex items-center justify-center text-brand-primary">
+                <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+              </div>
+              <h3 class="font-semibold text-sm text-white">อัปเดตสม่ำเสมอ</h3>
+              <p class="text-xs text-gray-400 leading-relaxed font-light">
+                พัฒนาและอัปเดตระบบป้องกันการแบน (Bypass Anti-Cheat) อย่างสม่ำเสมอ ทันทุกแพตช์เกม FiveM ป้องกันการโดนตรวจจับได้ 100%
+              </p>
+            </div>
+
+            <div class="p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-brand-primary/40 transition-colors shadow-lg space-y-3">
+              <div class="w-10 h-10 rounded-xl bg-brand-primary/15 border border-purple-500/30 flex items-center justify-center text-brand-primary">
+                <i data-lucide="zap" class="w-5 h-5"></i>
+              </div>
+              <h3 class="font-semibold text-sm text-white">ระบบจัดส่งอัตโนมัติ</h3>
+              <p class="text-xs text-gray-400 leading-relaxed font-light">
+                สั่งซื้อแล้วได้รับ License Key และลิงก์ดาวน์โหลดคู่มือการใช้งานทันทีอัตโนมัติ สะดวก รวดเร็ว ไม่ต้องรอแอดมินยืนยัน
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- FEATURED PRODUCTS PREVIEW -->
+      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full mb-16">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+            <span>หมวดหมู่ :</span>
+            <span class="text-brand-primary font-bold">สินค้า FiveM ยอดนิยม</span>
+          </h2>
+          <button onclick="switchTab('store')" class="text-xs text-gray-400 hover:text-brand-primary flex items-center gap-1 transition-colors">
+            <span>ดูทั้งหมด</span>
+            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+
+        <div id="home-featured-grid" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ==================== TAB: STORE ==================== -->
+    <div id="tab-store" class="tab-content hidden flex-1 flex flex-col pt-8 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+      <div class="space-y-6">
+        
+        <!-- Header & Search Toolbar -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/10">
+          <div>
+            <h1 class="text-2xl sm:text-3xl font-bold text-white">ร้านค้า — <span class="brand-gradient-text">POWERXSTORE</span></h1>
+            <p class="text-xs sm:text-sm text-gray-400 mt-1 font-light">เลือกซื้อโปรแกรมช่วยเล่น Fivem และบริการปลดแบนคุณภาพสูง</p>
+          </div>
+
+          <!-- Search Input -->
+          <div class="relative w-full md:w-72">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <input type="text" id="product-search-input" placeholder="ค้นหาชื่อสินค้า..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-brand-primary transition-colors" />
+          </div>
+        </div>
+
+        <!-- Category Filters -->
+        <div class="flex flex-wrap items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          <button data-category-filter="all" class="px-4 py-2 rounded-xl text-xs bg-brand-primary text-white font-semibold transition-all">ทั้งหมด</button>
+          <button data-category-filter="cmd" class="px-4 py-2 rounded-xl text-xs bg-white/5 text-muted-foreground hover:text-white transition-all">CMD FIVEM</button>
+          <button data-category-filter="unban" class="px-4 py-2 rounded-xl text-xs bg-white/5 text-muted-foreground hover:text-white transition-all">UNBAN FIVEM</button>
+          <button data-category-filter="spoofer" class="px-4 py-2 rounded-xl text-xs bg-white/5 text-muted-foreground hover:text-white transition-all">SPOOFER</button>
+          <button data-category-filter="external" class="px-4 py-2 rounded-xl text-xs bg-white/5 text-muted-foreground hover:text-white transition-all">EXTERNAL</button>
+        </div>
+
+        <!-- Products Grid -->
+        <div id="products-grid" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+          <!-- Dynamically populated by renderProducts() -->
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ==================== TAB: TOPUP ==================== -->
+    <div id="tab-topup" class="tab-content hidden flex-1 flex flex-col pt-8 pb-16 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full">
+      <div class="space-y-6">
+        
+        <div class="text-center space-y-2">
+          <h1 class="text-2xl sm:text-3xl font-bold text-white">เติมเงินเข้าสู่ระบบ</h1>
+          <p class="text-xs sm:text-sm text-gray-400 font-light">ระบบเติมเงินอัตโนมัติ รวดเร็ว ปลอดภัย ยอดเข้าทันที 24 ชั่วโมง</p>
+        </div>
+
+        <!-- Topup Card Container -->
+        <div class="bg-[#0e0a17]/90 rounded-2xl border border-white/10 p-6 shadow-2xl backdrop-blur-md space-y-6">
+          
+          <!-- Topup Methods Tabs -->
+          <div class="grid grid-cols-2 gap-3 p-1 bg-white/5 rounded-xl border border-white/10 text-xs font-medium">
+            <button id="tab-btn-voucher" onclick="switchTopupMethod('voucher')" class="py-2.5 rounded-lg bg-brand-primary text-white font-semibold transition-all flex items-center justify-center gap-2">
+              <i data-lucide="gift" class="w-4 h-4"></i>
+              <span>ซองของขวัญ TrueMoney</span>
+            </button>
+            <button id="tab-btn-promptpay" onclick="switchTopupMethod('promptpay')" class="py-2.5 rounded-lg text-gray-300 hover:text-white transition-all flex items-center justify-center gap-2">
+              <i data-lucide="qr-code" class="w-4 h-4"></i>
+              <span>พร้อมเพย์ QR Code</span>
+            </button>
+          </div>
+
+          <!-- METHOD 1: TrueMoney Voucher Link -->
+          <div id="topup-method-voucher" class="space-y-4">
+            <div class="p-4 rounded-xl bg-brand-primary/10 border border-purple-500/20 text-xs text-gray-300 space-y-1">
+              <div class="font-semibold text-brand-primary flex items-center gap-1.5">
+                <i data-lucide="info" class="w-3.5 h-3.5"></i>
+                <span>วิธีเติมเงินด้วยซองของขวัญ TrueMoney:</span>
+              </div>
+              <p>1. เปิดแอป TrueMoney Wallet > เลือก "ส่งซองของขวัญ"</p>
+              <p>2. ใส่จำนวนเงิน > เลือก "สุ่มแบ่งเท่ากัน (หรือคนเดียว)" จำนวน 1 คน</p>
+              <p>3. คัดลอกลิงก์ซองของขวัญมาวางในช่องด้านล่าง แล้วกดยืนยัน</p>
+            </div>
+
+            <form onsubmit="redeemVoucher(event)" class="space-y-3">
+              <div>
+                <label class="block text-xs font-medium text-gray-300 mb-1.5">ลิงก์ซองของขวัญ (TrueMoney Gift Link)</label>
+                <div class="relative">
+                  <input type="url" id="voucher-url" placeholder="https://gift.truemoney.com/campaign/?v=..." required class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-brand-primary transition-colors font-mono" />
+                </div>
+              </div>
+
+              <button type="submit" class="w-full brand-btn-primary py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
+                <i data-lucide="check" class="w-4 h-4"></i>
+                <span>ยืนยันการเติมเงิน</span>
+              </button>
+            </form>
+          </div>
+
+          <!-- METHOD 2: PromptPay QR -->
+          <div id="topup-method-promptpay" class="hidden space-y-4">
+            
+            <div class="p-4 rounded-xl bg-brand-primary/10 border border-purple-500/20 flex items-center justify-between">
+              <div class="space-y-0.5">
+                <div class="text-xs text-gray-400">บัญชีผู้รับเงิน:</div>
+                <div id="topup-promptpay-name-display" class="text-sm font-bold text-white">POWERX STORE</div>
+                <div id="topup-promptpay-number-display" class="text-xs text-brand-primary font-mono">089-123-4567</div>
+              </div>
+              <span id="topup-bonus-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-pink-500/20 border border-pink-500/30 text-pink-300">
+                โบนัสพิเศษ +5%
+              </span>
+            </div>
+
+            <div class="space-y-3">
+              <label class="block text-xs font-medium text-gray-300">เลือกหรือระบุจำนวนเงินที่ต้องการเติม (บาท)</label>
+              <div class="grid grid-cols-4 gap-2">
+                <button type="button" onclick="setPromptPayAmount(50)" class="py-2 rounded-lg bg-white/5 border border-white/10 text-xs text-white hover:border-brand-primary transition-colors">฿50</button>
+                <button type="button" onclick="setPromptPayAmount(100)" class="py-2 rounded-lg bg-white/5 border border-white/10 text-xs text-white hover:border-brand-primary transition-colors">฿100</button>
+                <button type="button" onclick="setPromptPayAmount(300)" class="py-2 rounded-lg bg-white/5 border border-white/10 text-xs text-white hover:border-brand-primary transition-colors">฿300</button>
+                <button type="button" onclick="setPromptPayAmount(500)" class="py-2 rounded-lg bg-white/5 border border-white/10 text-xs text-white hover:border-brand-primary transition-colors">฿500</button>
+              </div>
+
+              <input type="number" id="promptpay-amount" value="100" min="10" max="50000" class="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-brand-primary transition-colors" />
+
+              <button type="button" onclick="generatePromptPayQR()" class="w-full brand-btn-primary py-2.5 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5">
+                <i data-lucide="qr-code" class="w-3.5 h-3.5"></i>
+                <span>สร้าง QR Code ชำระเงิน</span>
+              </button>
+            </div>
+
+            <!-- QR Code Display Result -->
+            <div id="promptpay-result" class="hidden p-6 rounded-xl bg-black/50 border border-white/10 text-center space-y-4">
+              <div class="text-xs text-gray-400">สแกนชำระเงินผ่าน Mobile Banking ได้ทุกธนาคาร</div>
+              
+              <div class="inline-block p-4 bg-white rounded-2xl shadow-xl">
+                <img id="promptpay-qr-img" src="" alt="PromptPay QR Code" class="w-44 h-44 object-contain" />
+              </div>
+
+              <div class="space-y-1">
+                <div class="text-xs text-gray-400">ยอดที่ต้องชำระ:</div>
+                <div id="qr-display-amount" class="text-2xl font-bold text-brand-primary">฿100.00</div>
+              </div>
+
+              <button type="button" onclick="confirmPromptPayTransfer()" class="w-full max-w-xs mx-auto py-2.5 rounded-xl bg-brand-primary text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-brand-primary/20">
+                <i data-lucide="check-circle" class="w-4 h-4"></i>
+                <span>จำลองการโอนเงินสำเร็จ (ตรวจสอบยอด)</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ==================== TAB: HISTORY ==================== -->
+    <div id="tab-history" class="tab-content hidden flex-1 flex flex-col pt-8 pb-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto w-full">
+      <div class="space-y-6">
+        
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-bold text-white">ประวัติการสั่งซื้อ</h1>
+          <p class="text-xs sm:text-sm text-gray-400 mt-1 font-light">ตรวจสอบรายการสั่งซื้อย้อนหลัง และเรียกดู License Key ที่ได้รับ</p>
+        </div>
+
+        <div class="bg-[#0e0a17]/90 rounded-2xl border border-white/10 overflow-hidden shadow-2xl backdrop-blur-md">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-white/10 bg-white/5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                  <th class="py-3 px-4">เลขออเดอร์</th>
+                  <th class="py-3 px-4">รายการสินค้า</th>
+                  <th class="py-3 px-4">ราคา</th>
+                  <th class="py-3 px-4">วันที่ทำรายการ</th>
+                  <th class="py-3 px-4 text-right">License Key</th>
+                </tr>
+              </thead>
+              <tbody id="history-table-body">
+                <!-- Populated by renderHistory() -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ==================== TAB: RESET HWID ==================== -->
+    <div id="tab-resethwid" class="tab-content hidden flex-1 flex flex-col pt-8 pb-16 px-4 sm:px-6 lg:px-8 max-w-3xl mx-auto w-full">
+      <div class="space-y-6">
+        
+        <div class="text-center space-y-2">
+          <h1 class="text-2xl sm:text-3xl font-bold text-white">รีเซ็ต HWID (Hardware ID)</h1>
+          <p class="text-xs sm:text-sm text-gray-400 font-light">สำหรับลูกค้าย้ายเครื่องคอมพิวเตอร์ หรือเปลี่ยนอุปกรณ์ฮาร์ดแวร์ใหม่</p>
+        </div>
+
+        <div class="bg-[#0e0a17]/90 rounded-2xl border border-white/10 p-6 sm:p-8 shadow-2xl backdrop-blur-md space-y-6">
+          <div class="p-4 rounded-xl bg-brand-primary/10 border border-purple-500/20 text-xs text-gray-300 space-y-1.5">
+            <div class="font-semibold text-brand-primary flex items-center gap-1.5">
+              <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+              <span>เงื่อนไขการรีเซ็ต HWID:</span>
+            </div>
+            <p>• สามารถรีเซ็ตฟรีได้ 1 ครั้ง ต่อ 24 ชั่วโมง</p>
+            <p>• หากรีเซ็ตเกินกำหนด กรุณาติดต่อแอดมินผ่าน Discord เพื่อทำการปลดล็อก</p>
+            <p>• ห้ามนำคีย์ไปแชร์ให้ผู้อื่น หากระบบตรวจพบจะทำการระงับคีย์ทันที</p>
+          </div>
+
+          <form onsubmit="handleResetHWID(event)" class="space-y-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-300 mb-1.5">License Key / คีย์สินค้า</label>
+              <input type="text" id="hwid-key" placeholder="PX-XXXX-XXXX-XXXX" required class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-brand-primary transition-colors font-mono" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-300 mb-1.5">ชื่อผู้ใช้งาน (Username) หรือ Discord Tag</label>
+              <input type="text" id="hwid-user" placeholder="ระบุชื่อผู้ใช้ของคุณ" required class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-brand-primary transition-colors" />
+            </div>
+
+            <button type="submit" id="btn-reset-hwid" class="w-full brand-btn-primary py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
+              <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+              <span>ยืนยันการรีเซ็ต HWID</span>
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ==================== TAB: ADMIN BACKOFFICE ==================== -->
+    <div id="tab-admin" class="tab-content hidden flex-1 flex flex-col pt-8 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+      <div class="space-y-6">
+        
+        <!-- Admin Header -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/10">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-pink-500 text-white uppercase">Admin Portal</span>
+              <span class="text-xs text-brand-primary font-mono flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-brand-primary animate-ping"></span> Real-time Live Mode
+              </span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-bold text-white mt-1">แผงควบคุมหลังบ้าน — <span class="brand-gradient-text">POWERXSTORE</span></h1>
+            <p class="text-xs text-gray-400 font-light">แก้ไขสินค้า เพิ่ม/ลบสินค้า เปลี่ยนรูปภาพ ตั้งค่าระบบเติมเงิน และจัดการร้านค้าได้แบบเรียลไทม์</p>
+          </div>
+
+          <button onclick="resetStoreToDefault()" class="px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 text-xs font-semibold flex items-center gap-1.5">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            <span>รีเซ็ตข้อมูลทั้งหมดกลับเป็นค่าเริ่มต้น</span>
+          </button>
+        </div>
+
+        <!-- Admin Navigation Sub-Tabs -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-2 border-b border-white/10 text-xs font-medium scrollbar-hide">
+          <button id="admin-btn-products" onclick="switchAdminTab('products')" class="admin-tab-btn active px-4 py-2.5 rounded-xl border border-transparent transition-all flex items-center gap-2">
+            <i data-lucide="package" class="w-4 h-4"></i>
+            <span>จัดการสินค้า (<span id="admin-subtab-count-products">4</span>)</span>
+          </button>
+          <button id="admin-btn-topup" onclick="switchAdminTab('topup')" class="admin-tab-btn px-4 py-2.5 rounded-xl border border-transparent transition-all flex items-center gap-2">
+            <i data-lucide="credit-card" class="w-4 h-4"></i>
+            <span>ตั้งค่าระบบเติมเงิน (Realtime)</span>
+          </button>
+          <button id="admin-btn-settings" onclick="switchAdminTab('settings')" class="admin-tab-btn px-4 py-2.5 rounded-xl border border-transparent transition-all flex items-center gap-2">
+            <i data-lucide="settings" class="w-4 h-4"></i>
+            <span>ตั้งค่าร้านค้า & แบนเนอร์</span>
+          </button>
+          <button id="admin-btn-users" onclick="switchAdminTab('users')" class="admin-tab-btn px-4 py-2.5 rounded-xl border border-transparent transition-all flex items-center gap-2">
+            <i data-lucide="users" class="w-4 h-4"></i>
+            <span>จัดการผู้ใช้ (<span id="admin-subtab-count-users">2</span>)</span>
+          </button>
+          <button id="admin-btn-orders" onclick="switchAdminTab('orders')" class="admin-tab-btn px-4 py-2.5 rounded-xl border border-transparent transition-all flex items-center gap-2">
+            <i data-lucide="file-text" class="w-4 h-4"></i>
+            <span>รายการคำสั่งซื้อ</span>
+          </button>
+          <button id="admin-btn-security" onclick="switchAdminTab('security')" class="admin-tab-btn px-4 py-2.5 rounded-xl border border-transparent transition-all flex items-center gap-2 text-brand-accent">
+            <i data-lucide="shield-check" class="w-4 h-4 text-brand-primary"></i>
+            <span>ระบบป้องกันเว็บ & WAF</span>
+          </button>
+        </div>
+
+        <!-- SUBPANEL 1: PRODUCTS -->
+        <div id="admin-panel-products" class="admin-tab-content space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-sm text-white">รายการสินค้าทั้งหมด</h3>
+            <button onclick="openProductAdminModal(true)" class="brand-btn-primary px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-md">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>เพิ่มสินค้าใหม่</span>
+            </button>
+          </div>
+
+          <div class="bg-[#0e0a17] rounded-2xl border border-white/10 overflow-hidden shadow-xl">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-white/10 bg-white/5 text-[11px] font-semibold text-gray-400 uppercase">
+                    <th class="py-3 px-4">สินค้า</th>
+                    <th class="py-3 px-4">ราคา</th>
+                    <th class="py-3 px-4">สต็อก</th>
+                    <th class="py-3 px-4">ขายแล้ว</th>
+                    <th class="py-3 px-4 text-right">จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-products-table">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUBPANEL 2: TOPUP SETTINGS -->
+        <div id="admin-panel-topup" class="admin-tab-content hidden space-y-4">
+          <div class="max-w-3xl bg-[#0e0a17] rounded-2xl border border-white/10 p-6 space-y-6">
+            <div>
+              <h3 class="font-bold text-base text-white">ตั้งค่าระบบเติมเงินแบบ Real-time</h3>
+              <p class="text-xs text-gray-400 mt-0.5">แก้ไขได้ทันที ยอดเงิน บัญชี และ QR Code จะอัปเดตหน้าเว็บทันทีโดยไม่ต้องแก้ไขโค้ด</p>
+            </div>
+
+            <form onsubmit="saveTopupSettings(event)" class="space-y-4">
+              
+              <!-- TrueMoney Settings -->
+              <div class="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
+                <div class="flex items-center justify-between">
+                  <h4 class="text-xs font-bold text-brand-primary flex items-center gap-1.5">
+                    <i data-lucide="gift" class="w-4 h-4"></i>
+                    <span>ระบบซองของขวัญ TrueMoney</span>
+                  </h4>
+                  <label class="flex items-center gap-2 cursor-pointer text-xs text-gray-300">
+                    <input type="checkbox" id="admin-tp-truemoney-enabled" class="accent-brand-primary" />
+                    <span>เปิดใช้งาน</span>
+                  </label>
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1">เบอร์ TrueMoney รับเงิน</label>
+                  <input type="text" id="admin-tp-truemoney-phone" class="w-full px-3 py-2 rounded-xl bg-black border border-white/10 text-white text-xs font-mono" />
+                </div>
+              </div>
+
+              <!-- PromptPay Settings -->
+              <div class="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
+                <h4 class="text-xs font-bold text-brand-primary flex items-center gap-1.5">
+                  <i data-lucide="qr-code" class="w-4 h-4"></i>
+                  <span>ระบบพร้อมเพย์ (PromptPay QR)</span>
+                </h4>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs text-gray-400 mb-1">เบอร์โทรศัพท์ / เลขบัตรประชาชน PromptPay</label>
+                    <input type="text" id="admin-tp-promptpay-number" class="w-full px-3 py-2 rounded-xl bg-black border border-white/10 text-white text-xs font-mono" />
+                  </div>
+                  <div>
+                    <label class="block text-xs text-gray-400 mb-1">ชื่อบัญชีผู้รับเงิน (Account Name)</label>
+                    <input type="text" id="admin-tp-promptpay-name" class="w-full px-3 py-2 rounded-xl bg-black border border-white/10 text-white text-xs" />
+                  </div>
+                </div>
+
+                <!-- Custom QR Image File Upload -->
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1">อัปโหลดรูป QR Code พร้อมเพย์ของคุณ (จากคอมพิวเตอร์)</label>
+                  <div class="flex items-center gap-4">
+                    <input type="file" accept="image/*" onchange="handleTopupQrUpload(event)" class="text-xs text-gray-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-primary file:text-white hover:file:brightness-110" />
+                    <img id="admin-tp-qr-preview" src="" alt="QR Preview" class="w-14 h-14 object-contain rounded-lg border border-white/10 bg-white" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bonus Rate -->
+              <div class="p-4 rounded-xl bg-white/5 border border-white/10">
+                <label class="block text-xs font-bold text-brand-primary mb-1">โบนัสการเติมเงินพิเศษ (%)</label>
+                <div class="flex items-center gap-3">
+                  <input type="number" id="admin-tp-bonus" min="0" max="100" class="w-32 px-3 py-2 rounded-xl bg-black border border-white/10 text-white text-xs font-mono" />
+                  <span class="text-xs text-gray-400">% (เช่น ใส่ 5 แปลว่าเติม 100 ได้ 105)</span>
+                </div>
+              </div>
+
+              <button type="submit" class="brand-btn-primary px-6 py-2.5 rounded-xl font-semibold text-xs flex items-center gap-2 shadow-lg">
+                <i data-lucide="save" class="w-4 h-4"></i>
+                <span>บันทึกการตั้งค่าระบบเติมเงิน (มีผลทันที)</span>
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- SUBPANEL 3: STORE & BANNER SETTINGS -->
+        <div id="admin-panel-settings" class="admin-tab-content hidden space-y-4">
+          <div class="max-w-3xl bg-[#0e0a17] rounded-2xl border border-white/10 p-6 space-y-6">
+            <div>
+              <h3 class="font-bold text-base text-white">ตั้งค่าข้อมูลร้านค้า & แบนเนอร์</h3>
+              <p class="text-xs text-gray-400 mt-0.5">เปลี่ยนรูปแบนเนอร์ ข้อความต้อนรับ และประกาศได้แบบเรียลไทม์</p>
+            </div>
+
+            <form onsubmit="saveStoreSettings(event)" class="space-y-4">
+              
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1">ชื่อร้านค้า (Store Name)</label>
+                  <input type="text" id="admin-st-name" class="w-full px-3 py-2 rounded-xl bg-black border border-white/10 text-white text-xs font-bold" />
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-400 mb-1">ลิงก์ Discord ของร้าน</label>
+                  <input type="url" id="admin-st-discord" class="w-full px-3 py-2 rounded-xl bg-black border border-white/10 text-white text-xs font-mono" />
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">ข้อความประกาศบนสุด (Top Announcement)</label>
+                <input type="text" id="admin-st-announcement" class="w-full px-3 py-2 rounded-xl bg-black border border-white/10 text-white text-xs" />
+              </div>
+
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">คำอธิบายร้านค้า (Store Description)</label>
+                <textarea id="admin-st-desc" rows="3" class="w-full px-3 py-2 rounded-xl bg-black border border-white/10 text-white text-xs leading-relaxed"></textarea>
+              </div>
+
+              <!-- Store Logo Management -->
+              <div class="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
+                <h4 class="text-xs font-bold text-brand-primary flex items-center gap-1.5">
+                  <i data-lucide="image" class="w-4 h-4"></i>
+                  <span>เปลี่ยนโลโก้ร้านค้า (Store Logo)</span>
+                </h4>
+                <div class="flex items-center gap-4">
+                  <div class="w-16 h-16 rounded-xl bg-black/60 border border-white/10 p-1 flex items-center justify-center shrink-0">
+                    <img id="admin-st-logo-preview" src="assets/logo.png?v=20261009_v2" alt="Logo Preview" class="w-full h-full object-contain drop-shadow-[0_0_8px_#A855F7]" style="mix-blend-mode: screen;" />
+                  </div>
+                  <div class="flex-1 space-y-1.5">
+                    <label class="block text-xs text-gray-400">อัปโหลดไฟล์รูปภาพโลโก้ใหม่ (PNG / SVG / JPG):</label>
+                    <input type="file" accept="image/*" onchange="handleLogoUpload(event)" class="text-xs text-gray-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-primary file:text-white hover:file:brightness-110" />
+                    <input type="hidden" id="admin-st-logo-url" />
+                    <p class="text-[11px] text-gray-400">เมื่อเลือกไฟล์ ระบบจะเปลี่ยนโลโก้ทั่วทั้งเว็บไซต์ให้ทันทีแบบ Real-time</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Banner Management -->
+              <div class="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
+                <h4 class="text-xs font-bold text-brand-primary">จัดการรูปภาพแบนเนอร์โปรโมชั่น</h4>
+                
+                <div class="space-y-2">
+                  <label class="block text-xs text-gray-400">อัปโหลดรูปภาพใหม่จากคอมพิวเตอร์:</label>
+                  <input type="file" accept="image/*" onchange="handleBannerUpload(event)" class="text-xs text-gray-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-primary file:text-white hover:file:brightness-110" />
+                  <input type="hidden" id="admin-st-banner-url" />
+                </div>
+
+                <div class="w-full aspect-[21/9] rounded-xl overflow-hidden border border-white/10 bg-black">
+                  <img id="admin-st-banner-preview" src="" alt="Banner Preview" class="w-full h-full object-cover" />
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs text-gray-400 mb-1">ข้อความหัวข้อบนแบนเนอร์</label>
+                    <input type="text" id="admin-st-banner-title" class="w-full px-3 py-2 rounded-xl bg-black border border-white/10 text-white text-xs font-semibold" />
+                  </div>
+                  <div>
+                    <label class="block text-xs text-gray-400 mb-1">ข้อความคำโปรยบนแบนเนอร์</label>
+                    <input type="text" id="admin-st-banner-subtitle" class="w-full px-3 py-2 rounded-xl bg-black border border-white/10 text-white text-xs" />
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" class="brand-btn-primary px-6 py-2.5 rounded-xl font-semibold text-xs flex items-center gap-2 shadow-lg">
+                <i data-lucide="save" class="w-4 h-4"></i>
+                <span>บันทึกข้อมูลร้านค้า (อัปเดตทันที)</span>
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- SUBPANEL 4: USERS MANAGEMENT -->
+        <div id="admin-panel-users" class="admin-tab-content hidden space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-sm text-white">รายชื่อผู้ใช้งานทั้งหมด</h3>
+            <span class="text-xs text-gray-400">💡 แอดมินสามารถดูรหัสผ่าน และคลิกชื่อผู้ใช้เพื่อดูประวัติการซื้อและเติมเงินได้</span>
+          </div>
+
+          <div class="bg-[#0e0a17] rounded-2xl border border-white/10 overflow-hidden shadow-xl">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-white/10 bg-white/5 text-[11px] font-semibold text-gray-400 uppercase">
+                    <th class="py-3 px-4">ผู้ใช้งาน (Username)</th>
+                    <th class="py-3 px-4">รหัสผ่าน (Password)</th>
+                    <th class="py-3 px-4">สิทธิ์ (Role)</th>
+                    <th class="py-3 px-4">ยอดเงินคงเหลือ</th>
+                    <th class="py-3 px-4 text-right">จัดการ & ประวัติ</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-users-table">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUBPANEL 5: ORDERS -->
+        <div id="admin-panel-orders" class="admin-tab-content hidden space-y-4">
+          <h3 class="font-bold text-sm text-white">รายการคำสั่งซื้อและคีย์ทั้งหมด</h3>
+          
+          <div class="bg-[#0e0a17] rounded-2xl border border-white/10 overflow-hidden shadow-xl">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-white/10 bg-white/5 text-[11px] font-semibold text-gray-400 uppercase">
+                    <th class="py-3 px-4">เลขออเดอร์</th>
+                    <th class="py-3 px-4">สินค้า</th>
+                    <th class="py-3 px-4">ยอดเงิน</th>
+                    <th class="py-3 px-4">วันที่</th>
+                    <th class="py-3 px-4 text-right">License Key</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-orders-table">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUBPANEL 6: SECURITY & WAF -->
+        <div id="admin-panel-security" class="admin-tab-content hidden space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 class="font-bold text-base text-white flex items-center gap-2">
+                <i data-lucide="shield-alert" class="w-5 h-5 text-brand-primary"></i>
+                <span>ระบบรักษาความปลอดภัย & ป้องกันการโจมตี (Cyber Defense & WAF)</span>
+              </h3>
+              <p class="text-xs text-gray-400 mt-0.5">ป้องกันการยิง DDoS, Anti-Bot Spam, ป้องกันการฉีดสคริปต์ (Anti-XSS/SQLi) และตรวจจับการแฮกยอดเงินแบบ Real-time</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/30 text-green-400 text-xs font-semibold">
+                <span class="w-2 h-2 rounded-full bg-green-400 animate-ping"></span>
+                <span>WAF SHIELD: ปกป้อง 100%</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- Live Security Stats Cards -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="p-4 rounded-xl bg-[#0e0a17] border border-white/10 space-y-1">
+              <span class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">การโจมตีที่บล็อกได้</span>
+              <div id="sec-stat-blocked" class="text-2xl font-black text-brand-primary">0</div>
+              <span class="text-[10px] text-green-400 flex items-center gap-1">
+                <i data-lucide="shield" class="w-3 h-3"></i>
+                <span>บล็อกอัตโนมัติ</span>
+              </span>
+            </div>
+
+            <div class="p-4 rounded-xl bg-[#0e0a17] border border-white/10 space-y-1">
+              <span class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">Anti-DDoS Mode</span>
+              <div id="sec-stat-mode" class="text-lg font-bold text-white">UNDER ATTACK</div>
+              <span class="text-[10px] text-brand-accent">ตรวจจับอัตราคำขอผิดปกติ</span>
+            </div>
+
+            <div class="p-4 rounded-xl bg-[#0e0a17] border border-white/10 space-y-1">
+              <span class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">WAF Rules Active</span>
+              <div class="text-2xl font-black text-white">18 <span class="text-xs font-normal text-gray-400">กฎความปลอดภัย</span></div>
+              <span class="text-[10px] text-brand-primary">XSS • SQLi • RateLimit</span>
+            </div>
+
+            <div class="p-4 rounded-xl bg-[#0e0a17] border border-white/10 space-y-1">
+              <span class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">Integrity Watchdog</span>
+              <div class="text-lg font-bold text-green-400 flex items-center gap-1.5">
+                <i data-lucide="lock" class="w-4 h-4"></i>
+                <span>HASH VERIFIED</span>
+              </div>
+              <span class="text-[10px] text-gray-400">ป้องกันแฮกยอดเงิน LocalStorage</span>
+            </div>
+          </div>
+
+          <!-- Interactive Test & Control Center -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            
+            <!-- Defense Configuration Toggles -->
+            <div class="bg-[#0e0a17] rounded-2xl border border-white/10 p-5 space-y-4">
+              <h4 class="text-xs font-bold text-brand-primary flex items-center gap-2">
+                <i data-lucide="sliders" class="w-4 h-4"></i>
+                <span>ตั้งค่าระบบตรวจจับและป้องกัน</span>
+              </h4>
+
+              <div class="space-y-3 text-xs">
+                <label class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:border-brand-primary/30 transition-all cursor-pointer">
+                  <div>
+                    <div class="font-semibold text-white">Anti-DDoS & Traffic Rate Limiter</div>
+                    <div class="text-[10px] text-gray-400">ตรวจจับการคลิกสแปม หรือการยิงย้ำคำขอรัวๆ อัตโนมัติ</div>
+                  </div>
+                  <input type="checkbox" id="sec-toggle-ddos" checked class="accent-brand-primary w-4 h-4" onchange="toggleSecuritySetting('antiDdos', this.checked)">
+                </label>
+
+                <label class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:border-brand-primary/30 transition-all cursor-pointer">
+                  <div>
+                    <div class="font-semibold text-white">WAF Deep Payload Filter (Anti-XSS & SQLi)</div>
+                    <div class="text-[10px] text-gray-400">สแกนทุกฟอร์มและลิงก์ซองของขวัญ บล็อกสคริปต์อันตราย</div>
+                  </div>
+                  <input type="checkbox" id="sec-toggle-waf" checked class="accent-brand-primary w-4 h-4" onchange="toggleSecuritySetting('wafInspection', this.checked)">
+                </label>
+
+                <label class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:border-brand-primary/30 transition-all cursor-pointer">
+                  <div>
+                    <div class="font-semibold text-white">Anti-Tamper Balance Watchdog</div>
+                    <div class="text-[10px] text-gray-400">บล็อกการแก้ไขยอดเงินใน Console คืนค่าเงินถูกต้องทันที</div>
+                  </div>
+                  <input type="checkbox" id="sec-toggle-tamper" checked class="accent-brand-primary w-4 h-4" onchange="toggleSecuritySetting('balanceTamper', this.checked)">
+                </label>
+
+                <label class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:border-brand-primary/30 transition-all cursor-pointer">
+                  <div>
+                    <div class="font-semibold text-white">Anti-Inspect & Shortcut Lock</div>
+                    <div class="text-[10px] text-gray-400">บล็อกคลิกขวา และปุ่ม F12 / Ctrl+Shift+I เพื่อป้องกันส่องโค้ด</div>
+                  </div>
+                  <input type="checkbox" id="sec-toggle-devtools" class="accent-brand-primary w-4 h-4" onchange="toggleSecuritySetting('antiDevTools', this.checked)">
+                </label>
+              </div>
+            </div>
+
+            <!-- Attack Simulator (Test the Defenses in Real-time) -->
+            <div class="bg-[#0e0a17] rounded-2xl border border-white/10 p-5 space-y-4">
+              <h4 class="text-xs font-bold text-brand-primary flex items-center gap-2">
+                <i data-lucide="zap" class="w-4 h-4"></i>
+                <span>ทดสอบการโจมตีจำลอง (Simulate Cyber Attacks)</span>
+              </h4>
+              <p class="text-xs text-gray-400">แอดมินสามารถกดปุ่มด้านล่างเพื่อทดสอบระบบป้องกันได้ทันที:</p>
+
+              <div class="space-y-2.5">
+                <button onclick="simulateDDoSAttack()" class="w-full py-2.5 px-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-300 text-xs font-semibold flex items-center justify-between transition-all">
+                  <div class="flex items-center gap-2">
+                    <i data-lucide="flame" class="w-4 h-4 text-red-400"></i>
+                    <span>1. ทดสอบยิง DDoS จำลอง (Flood Attack)</span>
+                  </div>
+                  <span class="text-[10px] bg-red-500/20 px-2 py-0.5 rounded text-red-200">ทดสอบ Rate Limit</span>
+                </button>
+
+                <button onclick="simulateXSSAttack()" class="w-full py-2.5 px-3 rounded-xl bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 text-yellow-300 text-xs font-semibold flex items-center justify-between transition-all">
+                  <div class="flex items-center gap-2">
+                    <i data-lucide="code" class="w-4 h-4 text-yellow-400"></i>
+                    <span>2. ทดสอบยิง XSS / Script Injection</span>
+                  </div>
+                  <span class="text-[10px] bg-yellow-500/20 px-2 py-0.5 rounded text-yellow-200">ทดสอบ WAF Filter</span>
+                </button>
+
+                <button onclick="simulateBalanceTamper()" class="w-full py-2.5 px-3 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-300 text-xs font-semibold flex items-center justify-between transition-all">
+                  <div class="flex items-center gap-2">
+                    <i data-lucide="wallet" class="w-4 h-4 text-purple-400"></i>
+                    <span>3. ทดสอบแฮกโกงเงินใน LocalStorage</span>
+                  </div>
+                  <span class="text-[10px] bg-purple-500/20 px-2 py-0.5 rounded text-purple-200">ทดสอบ Watchdog</span>
+                </button>
+              </div>
+
+              <div class="text-[11px] text-gray-400 p-3 rounded-xl bg-black border border-white/5 space-y-1">
+                <span class="text-white font-semibold flex items-center gap-1">
+                  <i data-lucide="info" class="w-3.5 h-3.5 text-brand-primary"></i>
+                  <span>การรับมืออัตโนมัติ:</span>
+                </span>
+                <p>เมื่อตรวจพบการโจมตี ระบบจะบล็อกคำขอทันที ไม่ทำให้เซิร์ฟเวอร์หรือหน้าเว็บล่ม และบันทึกประวัติไว้ด้านล่าง</p>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Live Security Incident Log Table -->
+          <div class="bg-[#0e0a17] rounded-2xl border border-white/10 overflow-hidden shadow-xl space-y-3 p-5">
+            <div class="flex items-center justify-between">
+              <h4 class="text-xs font-bold text-white flex items-center gap-2">
+                <i data-lucide="terminal" class="w-4 h-4 text-brand-primary"></i>
+                <span>บันทึกเหตุการณ์การโจมตี (Live Threat & WAF Logs)</span>
+              </h4>
+              <button onclick="clearSecurityLogs()" class="text-[10px] text-gray-400 hover:text-white px-2 py-1 rounded bg-white/5">ล้างประวัติ</button>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-white/10 bg-white/5 text-[10px] font-semibold text-gray-400 uppercase">
+                    <th class="py-2.5 px-3">เวลา</th>
+                    <th class="py-2.5 px-3">ประเภทภัยคุกคาม</th>
+                    <th class="py-2.5 px-3">รายละเอียด Payload / สาเหตุ</th>
+                    <th class="py-2.5 px-3">ความรุนแรง</th>
+                    <th class="py-2.5 px-3 text-right">ผลการป้องกัน</th>
+                  </tr>
+                </thead>
+                <tbody id="sec-incident-logs-table" class="text-xs">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="relative z-10 border-t border-white/10 bg-[#060509] mt-16 pt-12 pb-8 overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 mb-12">
+        
+        <!-- Brand Info -->
+        <div class="lg:col-span-4 space-y-3">
+          <div class="flex items-center gap-2.5">
+            <img id="footer-brand-logo" src="assets/logo.png?v=20261009_v2" alt="POWERXSTORE Logo" class="w-8 h-8 object-contain drop-shadow-[0_0_8px_#A855F7]" style="mix-blend-mode: screen;" />
+            <span class="font-extrabold text-lg text-white">POWERX<span class="text-brand-primary">STORE</span></span>
+          </div>
+          <p class="text-xs text-gray-400 leading-relaxed font-light">
+            ร้านบริการจำหน่ายโปรแกรมช่วยเล่น Fivem / ปลดแบนFivem ราคาถูกและปลอดภัยต่อผู้ใช้ ตอบโจทย์ทุกการใช้งาน ต่างๆ ไม่ว่าจะเป็นโปรแกรม External / Unban / Internal / CMD
+          </p>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="lg:col-span-2 space-y-2.5">
+          <h4 class="text-xs font-semibold text-gray-300 uppercase tracking-wider">ลิงก์ด่วน</h4>
+          <ul class="space-y-1.5 text-xs text-gray-400">
+            <li><a href="#" data-tab-target="store" class="hover:text-brand-primary transition-colors">สินค้าทั้งหมด</a></li>
+            <li><a href="#" data-tab-target="topup" class="hover:text-brand-primary transition-colors">เติมเงิน</a></li>
+            <li><a href="#" data-tab-target="history" class="hover:text-brand-primary transition-colors">ประวัติการสั่งซื้อ</a></li>
+          </ul>
+        </div>
+
+        <!-- Services -->
+        <div class="lg:col-span-2 space-y-2.5">
+          <h4 class="text-xs font-semibold text-gray-300 uppercase tracking-wider">บริการ</h4>
+          <ul class="space-y-1.5 text-xs text-gray-400">
+            <li><a href="#" data-tab-target="resethwid" class="hover:text-brand-primary transition-colors">รีเซ็ต HWID</a></li>
+            <li><button onclick="openContactModal()" class="hover:text-brand-primary transition-colors">ติดต่อสอบถาม</button></li>
+            <li><a href="https://discord.gg/invite/powerxstore" target="_blank" class="discord-link-target hover:text-brand-primary transition-colors">แจ้งปัญหาโปรแกรม</a></li>
+          </ul>
+        </div>
+
+        <!-- Discord Widget Box -->
+        <div class="lg:col-span-4">
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2 text-xs font-bold text-white">
+                <i data-lucide="disc" class="w-4 h-4 text-[#5865F2]"></i>
+                <span>POWERX COMMUNITY</span>
+              </div>
+              <span class="inline-flex items-center gap-1 text-[10px] text-brand-primary font-medium">
+                <span class="w-1.5 h-1.5 rounded-full bg-brand-primary animate-ping"></span>
+                <span>142 ออนไลน์</span>
+              </span>
+            </div>
+
+            <!-- Members Simulation -->
+            <div class="space-y-1.5 py-1 text-xs text-gray-300">
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-brand-primary"></div>
+                <span class="text-[11px]">แอดมิน POWERX (Support 24h)</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-brand-primary"></div>
+                <span class="text-[11px]">บอทแจ้งเตือนออเดอร์ FiveM</span>
+              </div>
+            </div>
+
+            <a href="https://discord.gg/invite/powerxstore" target="_blank" rel="noopener noreferrer" class="discord-link-target block w-full text-center py-2 rounded-xl bg-[#5865F2] hover:bg-[#4752c4] text-white text-xs font-semibold transition-colors">
+              เข้าร่วม Discord
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom Copyright Bar -->
+      <div class="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-400">
+        <div>
+          © 2026 <span class="text-white font-medium">POWERXSTORE</span> สงวนลิขสิทธิ์
+        </div>
+        <div class="flex items-center gap-4 text-[11px]">
+          <button onclick="openPolicyModal('terms')" class="hover:text-white transition-colors">ข้อกำหนดการใช้งาน</button>
+          <button onclick="openPolicyModal('privacy')" class="hover:text-white transition-colors">นโยบายความเป็นส่วนตัว</button>
+          <button onclick="openContactModal()" class="hover:text-white transition-colors">ติดต่อเรา</button>
+        </div>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- ==================== AUTH MODAL (LOGIN / REGISTER) ==================== -->
+  <div id="auth-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="bg-[#0e0a17] border border-white/10 rounded-2xl max-w-sm w-full p-6 space-y-5 shadow-2xl relative">
+      
+      <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white">✕</button>
+
+      <div class="text-center space-y-1">
+        <div class="w-10 h-10 rounded-xl bg-brand-primary/20 border border-brand-primary/40 flex items-center justify-center mx-auto text-brand-primary">
+          <i data-lucide="user-check" class="w-5 h-5"></i>
+        </div>
+        <h3 class="font-bold text-lg text-white">ระบบสมาชิก</h3>
+        <p class="text-[11px] text-gray-400">เข้าสู่ระบบหรือสร้างบัญชีใหม่เพื่อเริ่มใช้งาน</p>
+      </div>
+
+      <!-- Auth Tabs Switcher -->
+      <div class="grid grid-cols-2 gap-1 p-1 bg-white/5 rounded-xl text-xs">
+        <button id="auth-tab-login" onclick="switchAuthTab('login')" class="py-2 rounded-lg bg-brand-primary text-white font-semibold transition-all">
+          เข้าสู่ระบบ
+        </button>
+        <button id="auth-tab-register" onclick="switchAuthTab('register')" class="py-2 rounded-lg text-gray-400 hover:text-white transition-all">
+          สมัครสมาชิก
+        </button>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <form id="auth-login-form" onsubmit="handleLogin(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs text-gray-400 mb-1">ชื่อผู้ใช้งาน (Username)</label>
+          <input type="text" id="login-username" required placeholder="admin หรือ ชื่อผู้ใช้" class="w-full px-3 py-2 rounded-xl bg-black border border-white/10 text-white text-xs focus:outline-none focus:border-brand-primary" />
+        </div>
+        <div>
+          <label class="block text-xs text-gray-400 mb-1">รหัสผ่าน (Password)</label>
+          <input type="password" id="login-password" required placeholder="••••••••" class="w-full px-3 py-2 rounded-xl bg-black border border-white/10 text-white text-xs focus:outline-none focus:border-brand-primary" />
+        </div>
+        <div class="text-[10px] text-gray-400 bg-white/5 p-2 rounded-lg">
+          💡 บัญชีแอดมินสำหรับทดสอบ: <strong>admin</strong> / รหัส: <strong>admin1234</strong>
+        </div>
+        <button type="submit" class="w-full brand-btn-primary py-2.5 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 shadow-md">
+          <i data-lucide="log-in" class="w-4 h-4"></i>
+          <span>เข้าสู่ระบบ</span>
+        </button>
+      </form>
+
+      <!-- REGISTER FORM -->
+      <form id="auth-register-form" onsubmit="handleRegister(event)" class="hidden space-y-3">
+        <div>
+          <label class="block text-xs text-gray-400 mb-1">ชื่อผู้ใช้งาน (Username)</label>
+          <input type="text" id="reg-username" required placeholder="เช่น Player99" class="w-full px-3 py-2 rounded-xl bg-black border border-white/10 text-white text-xs focus:outline-none focus:border-brand-primary" />
+        </div>
+        <div>
+          <label class="block text-xs text-gray-400 mb-1">อีเมล (Email)</label>
+          <input type="email" id="reg-email" placeholder="example@email.com" class="w-full px-3 py-2 rounded-xl bg-black border border-white/10 text-white text-xs focus:outline-none focus:border-brand-primary" />
+        </div>
+        <div>
+          <label class="block text-xs text-gray-400 mb-1">รหัสผ่าน (Password)</label>
+          <input type="password" id="reg-password" required placeholder="อย่างน้อย 4 ตัวอักษร" class="w-full px-3 py-2 rounded-xl bg-black border border-white/10 text-white text-xs focus:outline-none focus:border-brand-primary" />
+        </div>
+        <div>
+          <label class="block text-xs text-gray-400 mb-1">ยืนยันรหัสผ่าน</label>
+          <input type="password" id="reg-password-confirm" required placeholder="••••••••" class="w-full px-3 py-2 rounded-xl bg-black border border-white/10 text-white text-xs focus:outline-none focus:border-brand-primary" />
+        </div>
+        <div class="text-[10px] text-brand-primary">
+          🎁 สมัครสมาชิกใหม่วันนี้ รับฟรีโบนัส ฿50.00 ทันที!
+        </div>
+        <button type="submit" class="w-full brand-btn-primary py-2.5 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 shadow-md">
+          <i data-lucide="user-plus" class="w-4 h-4"></i>
+          <span>สมัครสมาชิกใหม่</span>
+        </button>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ==================== ADMIN: ADD/EDIT PRODUCT MODAL ==================== -->
+  <div id="admin-product-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="bg-[#0e0a17] border border-white/10 rounded-2xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl relative">
+      
+      <button onclick="closeProductAdminModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white">✕</button>
+
+      <div>
+        <h3 id="admin-prod-form-title" class="font-bold text-base text-white">จัดการสินค้า</h3>
+        <p class="text-xs text-gray-400">กรอกข้อมูลสินค้าและเลือกรูปภาพจากเครื่องได้ทันที</p>
+      </div>
+
+      <form onsubmit="saveProductFromAdmin(event)" class="space-y-3">
+        <input type="hidden" id="admin-prod-id" />
+
+        <div>
+          <label class="block text-xs text-gray-400 mb-1">ชื่อสินค้า</label>
+          <input type="text" id="admin-prod-name" required placeholder="เช่น NEXUS V.3 / ปลดแบน FiveM" class="w-full px-3 py-2 rounded-xl bg-black border border-white/10 text-white text-xs font-semibold" />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">หมวดหมู่</label>
+            <select id="admin-prod-category" class="w-full px-3 py-2 rounded-xl bg-black border border-white/10 text-white text-xs">
+              <option value="cmd">CMD FIVEM</option>
+              <option value="unban">UNBAN FIVEM</option>
+              <option value="spoofer">SPOOFER</option>
+              <option value="external">EXTERNAL FIVEM</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">จำนวนในสต็อก (ชิ้น)</label>
+            <input type="number" id="admin-prod-stock" required min="0" class="w-full px-3 py-2 rounded-xl bg-black border border-white/10 text-white text-xs" />
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="block text-xs font-semibold text-gray-300">กำหนดราคาแพ็กเกจระยะเวลา (บาท):</label>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 p-3 bg-white/5 rounded-xl border border-white/5">
+            <div>
+              <label class="block text-[10px] text-gray-400 mb-0.5">ราคา 1 วัน</label>
+              <input type="number" id="admin-prod-price-daily" placeholder="เว้นว่างถ้าไม่มี" class="w-full px-2 py-1 rounded bg-black border border-white/10 text-white text-xs" />
+            </div>
+            <div>
+              <label class="block text-[10px] text-gray-400 mb-0.5">ราคา 7 วัน</label>
+              <input type="number" id="admin-prod-price-weekly" placeholder="เว้นว่างถ้าไม่มี" class="w-full px-2 py-1 rounded bg-black border border-white/10 text-white text-xs" />
+            </div>
+            <div>
+              <label class="block text-[10px] text-gray-400 mb-0.5">ราคา 30 วัน</label>
+              <input type="number" id="admin-prod-price-monthly" placeholder="เว้นว่างถ้าไม่มี" class="w-full px-2 py-1 rounded bg-black border border-white/10 text-white text-xs" />
+            </div>
+            <div>
+              <label class="block text-[10px] text-brand-primary font-bold mb-0.5">ราคา ถาวร *</label>
+              <input type="number" id="admin-prod-price" required min="1" class="w-full px-2 py-1 rounded bg-black border border-brand-primary/40 text-white text-xs font-bold" />
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center pt-1">
+          <label class="flex items-center gap-2 cursor-pointer text-xs text-gray-300">
+            <input type="checkbox" id="admin-prod-hot" class="accent-brand-primary" />
+            <span>ติดป้าย "ยอดฮิต" (Hot Item)</span>
+          </label>
+        </div>
+
+        <!-- Image upload & preview -->
+        <div class="p-3.5 rounded-xl bg-white/5 border border-white/10 space-y-2">
+          <label class="block text-xs font-bold text-brand-primary">รูปภาพสินค้า</label>
+          
+          <div class="flex items-center gap-4">
+            <div class="w-20 h-20 rounded-xl overflow-hidden bg-black border border-white/10 shrink-0">
+              <img id="admin-prod-preview" src="" alt="Preview" class="w-full h-full object-cover" />
+            </div>
+            <div class="flex-1 space-y-2">
+              <input type="file" accept="image/*" onchange="handleProductImageUpload(event)" class="text-xs text-gray-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-primary file:text-white hover:file:brightness-110" />
+              <input type="text" id="admin-prod-image" placeholder="หรือวางลิงก์รูป URL ตรงนี้" class="w-full px-2.5 py-1.5 rounded-lg bg-black border border-white/10 text-white text-[11px]" />
+            </div>
+          </div>
+        </div>
+
+        <!-- DOWNLOAD LINK & GUIDE LINK -->
+        <div class="p-3.5 rounded-xl bg-purple-950/20 border border-purple-500/20 space-y-3">
+          <div class="flex items-center gap-2 text-xs font-bold text-brand-primary">
+            <i data-lucide="link" class="w-4 h-4"></i>
+            <span>ลิงก์ดาวน์โหลดโปรแกรม & คู่มือ (ส่งให้ลูกค้าหลังซื้ออัตโนมัติ)</span>
+          </div>
+
+          <div class="space-y-2">
+            <div>
+              <label class="block text-[11px] text-gray-300 mb-1">📥 ลิงก์ดาวน์โหลดโปรแกรม (Download URL):</label>
+              <input type="url" id="admin-prod-download-url" placeholder="https://mega.nz/... หรือ Google Drive / Mediafire" class="w-full px-3 py-2 rounded-xl bg-black border border-white/10 text-white text-xs font-mono focus:border-brand-primary" />
+            </div>
+            <div>
+              <label class="block text-[11px] text-gray-300 mb-1">📖 ลิงก์คู่มือ / คลิปสอนติดตั้ง (Guide / Tutorial URL):</label>
+              <input type="url" id="admin-prod-guide-url" placeholder="https://youtube.com/... หรือ คู่มือการใช้งาน" class="w-full px-3 py-2 rounded-xl bg-black border border-white/10 text-white text-xs font-mono focus:border-brand-primary" />
+            </div>
+          </div>
+        </div>
+
+        <!-- DIGITAL LICENSE KEYS STOCK (1 Key Per Line) -->
+        <div class="p-3.5 rounded-xl bg-brand-primary/10 border border-brand-primary/30 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2 text-xs font-bold text-white">
+              <i data-lucide="key" class="w-4 h-4 text-brand-primary"></i>
+              <span>สต็อก License Key (ส่งมอบอัตโนมัติ)</span>
+            </div>
+            <span id="admin-prod-keys-count-badge" class="px-2 py-0.5 rounded-md bg-purple-500/20 border border-purple-500/40 text-purple-300 font-mono text-[10px]">0 คีย์</span>
+          </div>
+          
+          <p class="text-[11px] text-gray-400">
+            วาง License Key คีย์ละ 1 บรรทัด (ระบบจะดึงคีย์แรกสุดไปให้ลูกค้าทันทีที่ซื้อสำเร็จ และลดสต็อกลงอัตโนมัติ)
+          </p>
+
+          <textarea id="admin-prod-keys-input" rows="4" placeholder="PX-XXXX-XXXX-XXXX&#10;PX-YYYY-YYYY-YYYY&#10;PX-ZZZZ-ZZZZ-ZZZZ" class="w-full px-3 py-2 rounded-xl bg-black border border-white/15 text-purple-300 font-mono text-xs placeholder-gray-600 focus:border-brand-primary" oninput="updateAdminProdKeysCount()"></textarea>
+
+          <div class="flex items-center justify-between pt-1">
+            <button type="button" onclick="generateSampleKeysForProduct(10)" class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 hover:text-white text-[11px] transition-colors flex items-center gap-1.5">
+              <i data-lucide="sparkles" class="w-3 h-3 text-brand-primary"></i>
+              <span>สุ่มสร้าง 10 คีย์ตัวอย่าง</span>
+            </button>
+            <label class="flex items-center gap-1.5 text-[11px] text-gray-400 cursor-pointer">
+              <input type="checkbox" id="admin-prod-sync-stock" checked class="accent-brand-primary" />
+              <span>ปรับสต็อกตามจำนวนคีย์</span>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs text-gray-400 mb-1">คำอธิบายสินค้า</label>
+          <textarea id="admin-prod-desc" rows="3" placeholder="ระบุฟังก์ชัน หรือรายละเอียดการใช้งาน" class="w-full px-3 py-2 rounded-xl bg-black border border-white/10 text-white text-xs"></textarea>
+        </div>
+
+        <button type="submit" class="w-full brand-btn-primary py-2.5 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 shadow-md">
+          <i data-lucide="save" class="w-4 h-4"></i>
+          <span>บันทึกข้อมูลสินค้า</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== ADMIN: QUICK STOCK & KEYS MANAGER MODAL ==================== -->
+  <div id="admin-stock-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="bg-[#0e0a17] border border-purple-500/30 rounded-2xl max-w-xl w-full p-6 space-y-4 max-h-[92vh] overflow-y-auto shadow-2xl relative">
+      <button onclick="closeStockModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-sm">✕</button>
+
+      <!-- Header with Product Info -->
+      <div class="flex items-center gap-3.5 pb-3 border-b border-white/10">
+        <img id="stock-modal-img" src="" alt="" class="w-12 h-12 rounded-xl object-cover border border-purple-500/30" />
+        <div class="flex-1">
+          <div class="flex items-center gap-2">
+            <span id="stock-modal-badge" class="px-2 py-0.5 rounded text-[10px] bg-brand-primary/20 border border-brand-primary/40 text-brand-accent font-mono uppercase">CMD</span>
+            <span id="stock-modal-name" class="font-bold text-sm text-white">NEXUS V.2</span>
+          </div>
+          <div class="text-xs text-gray-400 mt-0.5">จัดการคลัง License Key และลิงก์ดาวน์โหลดสำหรับส่งมอบอัตโนมัติ</div>
+        </div>
+      </div>
+
+      <!-- Quick Metrics -->
+      <div class="grid grid-cols-3 gap-2.5">
+        <div class="p-3 rounded-xl bg-white/5 border border-white/10 text-center">
+          <div class="text-[10px] text-gray-400">คีย์คงเหลือพร้อมส่ง</div>
+          <div id="stock-modal-keys-count" class="text-lg font-bold text-brand-primary font-mono mt-0.5">0</div>
+        </div>
+        <div class="p-3 rounded-xl bg-white/5 border border-white/10 text-center">
+          <div class="text-[10px] text-gray-400">จำนวนสต็อกสินค้า</div>
+          <div id="stock-modal-stock-count" class="text-lg font-bold text-white font-mono mt-0.5">0</div>
+        </div>
+        <div class="p-3 rounded-xl bg-white/5 border border-white/10 text-center">
+          <div class="text-[10px] text-gray-400">ขายไปแล้ว</div>
+          <div id="stock-modal-sold-count" class="text-lg font-bold text-emerald-400 font-mono mt-0.5">0</div>
+        </div>
+      </div>
+
+      <!-- Links Quick Settings -->
+      <div class="p-3 rounded-xl bg-purple-950/20 border border-purple-500/20 space-y-2.5">
+        <div class="text-xs font-bold text-white flex items-center gap-1.5">
+          <i data-lucide="link" class="w-3.5 h-3.5 text-brand-primary"></i>
+          <span>ลิงก์ส่งมอบให้ลูกค้า (แก้ไขได้ทันที)</span>
+        </div>
+        <div>
+          <label class="block text-[10px] text-gray-400 mb-1">📥 ลิงก์ดาวน์โหลดโปรแกรม (Download URL):</label>
+          <input type="url" id="stock-modal-download-url" placeholder="https://mega.nz/... หรือ Drive" class="w-full px-2.5 py-1.5 rounded-lg bg-black border border-white/10 text-white font-mono text-xs focus:border-brand-primary" />
+        </div>
+        <div>
+          <label class="block text-[10px] text-gray-400 mb-1">📖 ลิงก์คู่มือ / คลิปสอนติดตั้ง (Tutorial URL):</label>
+          <input type="url" id="stock-modal-guide-url" placeholder="https://youtube.com/..." class="w-full px-2.5 py-1.5 rounded-lg bg-black border border-white/10 text-white font-mono text-xs focus:border-brand-primary" />
+        </div>
+      </div>
+
+      <!-- Current Stock Keys List -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <label class="text-xs font-bold text-white flex items-center gap-1.5">
+            <i data-lucide="list" class="w-3.5 h-3.5 text-brand-primary"></i>
+            <span>รายการคีย์ในคลังปัจจุบัน (<span id="stock-modal-active-keys-label">0 คีย์</span>):</span>
+          </label>
+          <div class="space-x-1">
+            <button type="button" onclick="copyAllStockKeys()" class="text-[10px] text-brand-accent hover:underline px-1.5 py-0.5">คัดลอกทั้งหมด</button>
+            <span class="text-gray-600">|</span>
+            <button type="button" onclick="clearAllStockKeys()" class="text-[10px] text-red-400 hover:underline px-1.5 py-0.5">ล้างทั้งหมด</button>
+          </div>
+        </div>
+
+        <div id="stock-modal-keys-list" class="max-h-36 overflow-y-auto p-2.5 rounded-xl bg-black border border-white/10 space-y-1.5 font-mono text-xs">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Batch Add Keys Form -->
+      <div class="p-3.5 rounded-xl bg-brand-primary/10 border border-brand-primary/30 space-y-2.5">
+        <div class="flex items-center justify-between">
+          <label class="text-xs font-bold text-white flex items-center gap-1.5">
+            <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-brand-primary"></i>
+            <span>เติมคีย์ใหม่เข้าสต็อก (1 คีย์ต่อ 1 บรรทัด)</span>
+          </label>
+          <span class="text-[10px] text-gray-400">วางคีย์หลายๆ บรรทัดพร้อมกันได้</span>
+        </div>
+
+        <textarea id="stock-modal-batch-input" rows="3" placeholder="วางคีย์ที่นี่ทีละบรรทัด เช่น:&#10;PX-KEY-1111-2222&#10;PX-KEY-3333-4444" class="w-full px-3 py-2 rounded-xl bg-black border border-white/20 text-white font-mono text-xs focus:border-brand-primary"></textarea>
+
+        <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+          <div class="flex items-center gap-1.5">
+            <button type="button" onclick="quickAddStockKeys(5)" class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 text-[10px] transition-colors">+ สุ่ม 5 คีย์</button>
+            <button type="button" onclick="quickAddStockKeys(10)" class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 text-[10px] transition-colors">+ สุ่ม 10 คีย์</button>
+            <button type="button" onclick="quickAddStockKeys(20)" class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 text-[10px] transition-colors">+ สุ่ม 20 คีย์</button>
+          </div>
+          
+          <button type="button" onclick="submitBatchStockKeys()" class="brand-btn-primary px-4 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-md">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            <span>เพิ่มคีย์เข้าคลัง</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-white/10">
+        <button type="button" onclick="closeStockModal()" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition-colors">
+          ปิดหน้าต่าง
+        </button>
+        <button type="button" onclick="saveStockModalLinks()" class="brand-btn-primary px-5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md">
+          <i data-lucide="save" class="w-4 h-4"></i>
+          <span>บันทึกการเปลี่ยนแปลงทั้งหมด</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PRODUCT DETAIL / PURCHASE MODAL ==================== -->
+  <div id="product-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="bg-[#0e0a17] border border-white/10 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
+      
+      <div class="p-4 sm:p-5 border-b border-white/10 flex items-start justify-between">
+        <div>
+          <span id="modal-product-category" class="text-[10px] uppercase font-bold text-brand-primary tracking-wider">CATEGORY</span>
+          <h3 id="modal-product-title" class="text-lg font-bold text-white mt-0.5">Product Title</h3>
+        </div>
+        <button onclick="closeProductModal()" class="text-gray-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="px-4 sm:px-5 space-y-4 overflow-y-auto flex-1">
+        <div class="w-full aspect-video rounded-xl overflow-hidden bg-black/50 relative border border-white/5">
+          <img id="modal-product-img" src="" alt="" class="w-full h-full object-cover" />
+          <div class="absolute bottom-2 left-2 px-2 py-0.5 rounded-full bg-brand-primary/20 border border-purple-500/40 text-[10px] text-brand-primary font-semibold">
+            STATUS: OPERATIONAL
+          </div>
+        </div>
+
+        <p id="modal-product-desc" class="text-xs text-gray-300 leading-relaxed"></p>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-200 mb-2">เลือกแพ็กเกจระยะเวลา:</label>
+          <div id="modal-product-plans" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-white/5 border border-white/5 space-y-2">
+          <div class="text-xs font-semibold text-white">คุณสมบัติและความสามารถ:</div>
+          <ul id="modal-product-features" class="space-y-1">
+            <!-- Rendered by JS -->
+          </ul>
+        </div>
+
+        <div class="flex items-center justify-between text-xs text-gray-400 py-1">
+          <span>คงเหลือในสต็อก: <strong id="modal-product-stock" class="text-white">50</strong> ชิ้น</span>
+          <span>จำหน่ายไปแล้ว: <strong id="modal-product-sold" class="text-white">124</strong> ชิ้น</span>
+        </div>
+      </div>
+
+      <div class="p-4 sm:p-5 border-t border-white/10 bg-black/40 flex items-center justify-between">
+        <div>
+          <div class="text-[10px] text-gray-400">ยอดชำระทั้งหมด:</div>
+          <div id="modal-pay-amount" class="text-xl font-bold text-brand-primary">฿0.00</div>
+        </div>
+        <button onclick="confirmPurchase()" class="brand-btn-primary px-6 py-2.5 rounded-xl font-semibold text-xs flex items-center gap-2">
+          <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+          <span>ยืนยันการซื้อสินค้า</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== ORDER SUCCESS MODAL ==================== -->
+  <div id="order-success-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="bg-[#0e0a17] border border-purple-500/40 rounded-2xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl">
+      <div class="w-14 h-14 rounded-full bg-brand-primary/20 text-brand-primary mx-auto flex items-center justify-center">
+        <i data-lucide="check" class="w-7 h-7"></i>
+      </div>
+
+      <div>
+        <h3 class="text-xl font-bold text-white">การสั่งซื้อสำเร็จ!</h3>
+        <p class="text-xs text-gray-400 mt-1">ขอบคุณที่ไว้วางใจเลือกใช้บริการ POWERXSTORE</p>
+      </div>
+
+      <div class="p-3.5 rounded-xl bg-white/5 border border-white/10 text-left space-y-2 text-xs">
+        <div class="flex justify-between text-gray-400">
+          <span>รหัสคำสั่งซื้อ:</span>
+          <span id="order-success-id" class="font-mono text-white font-bold"></span>
+        </div>
+        <div class="flex justify-between text-gray-400">
+          <span>สินค้า:</span>
+          <span id="order-success-item" class="text-white font-medium"></span>
+        </div>
+      </div>
+
+      <div class="space-y-1.5 text-left">
+        <label class="block text-xs font-semibold text-brand-primary">License Key ที่ได้รับ:</label>
+        <div class="flex items-center gap-1.5">
+          <input type="text" id="order-success-key" readonly class="w-full px-3 py-2 rounded-xl bg-black border border-white/20 text-white font-mono text-xs text-center" />
+          <button onclick="copyLicenseKey()" class="px-3 py-2 rounded-xl bg-brand-primary text-white font-semibold text-xs shrink-0 hover:brightness-110">
+            คัดลอก
+          </button>
+        </div>
+      </div>
+
+      <!-- Download & Guide Action Links -->
+      <div id="order-success-actions" class="space-y-2 pt-1">
+        <a id="order-success-download" href="#" target="_blank" class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-purple-600/30 transition-all">
+          <i data-lucide="download" class="w-4 h-4"></i>
+          <span>📥 ดาวน์โหลดโปรแกรม (Download Software)</span>
+        </a>
+        <a id="order-success-guide" href="#" target="_blank" class="w-full py-2 px-4 rounded-xl bg-white/5 border border-white/10 hover:border-purple-500/40 text-gray-300 hover:text-white font-medium text-xs flex items-center justify-center gap-2 transition-all">
+          <i data-lucide="book-open" class="w-4 h-4 text-brand-primary"></i>
+          <span>📖 ดูคู่มือการใช้งาน & คลิปสอนติดตั้ง</span>
+        </a>
+      </div>
+
+      <button onclick="closeOrderSuccessModal()" class="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition-colors">
+        ดูประวัติการสั่งซื้อ
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== CONTACT MODAL ==================== -->
+  <div id="contact-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="bg-[#0e0a17] border border-white/10 rounded-2xl max-w-sm w-full p-6 space-y-4">
+      <div class="flex items-center justify-between pb-2 border-b border-white/10">
+        <h3 class="font-bold text-white text-base">ติดต่อทีมงาน</h3>
+        <button onclick="closeContactModal()" class="text-gray-400 hover:text-white">✕</button>
+      </div>
+      <p class="text-xs text-gray-300">คุณสามารถติดต่อทีมงานเพื่อขอความช่วยเหลือ แจ้งปัญหา หรือสอบถามข้อมูลเพิ่มเติมได้ตลอด 24 ชั่วโมง ผ่าน Discord:</p>
+      <div class="space-y-2">
+        <a href="https://discord.gg/invite/powerxstore" target="_blank" class="discord-link-target flex items-center gap-3 p-3 rounded-xl bg-[#5865F2]/20 border border-[#5865F2]/40 text-white text-xs hover:bg-[#5865F2]/30 transition-all">
+          <i data-lucide="disc" class="w-5 h-5 text-[#5865F2]"></i>
+          <div class="flex-1">
+            <div class="font-bold">Discord Community Support</div>
+            <div class="text-[10px] text-gray-400">ตอบไวสุดตลอด 24 ชม.</div>
+          </div>
+        </a>
+      </div>
+      <button onclick="closeContactModal()" class="w-full py-2 rounded-xl bg-white/10 text-white text-xs font-medium">ปิด</button>
+    </div>
+  </div>
+
+  <!-- ==================== TERMS / POLICY MODAL ==================== -->
+  <div id="policy-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="bg-[#0e0a17] border border-white/10 rounded-2xl max-w-md w-full p-6 space-y-4 max-h-[80vh] flex flex-col">
+      <div class="flex items-center justify-between pb-2 border-b border-white/10">
+        <h3 id="policy-modal-title" class="font-bold text-white text-base">ข้อกำหนดการใช้งาน</h3>
+        <button onclick="closePolicyModal()" class="text-gray-400 hover:text-white">✕</button>
+      </div>
+      <div id="policy-modal-content" class="text-xs text-gray-300 space-y-2 overflow-y-auto flex-1 leading-relaxed font-light">
+      </div>
+      <button onclick="closePolicyModal()" class="w-full py-2 rounded-xl bg-brand-primary text-white font-semibold text-xs">รับทราบ</button>
+    </div>
+  </div>
+
+  <!-- ==================== ADMIN: USER DETAILS & HISTORY DRILL-DOWN MODAL ==================== -->
+  <div id="admin-user-detail-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="bg-[#0e0a17] border border-white/10 rounded-2xl max-w-2xl w-full p-6 space-y-5 max-h-[92vh] overflow-y-auto shadow-2xl relative">
+      
+      <button onclick="closeUserDetailsModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-base">✕</button>
+
+      <!-- Modal Title -->
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-xl bg-brand-primary/20 border border-brand-primary/40 flex items-center justify-center text-brand-primary shrink-0">
+          <i data-lucide="user-check" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-base text-white flex items-center gap-2">
+            <span id="ud-modal-username">Username</span>
+            <span id="ud-modal-role-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-primary text-white">Member</span>
+          </h3>
+          <p class="text-xs text-gray-400">ข้อมูลบัญชีผู้ใช้งาน, รหัสผ่าน, ประวัติการซื้อสินค้า และประวัติการเติมเงิน</p>
+        </div>
+      </div>
+
+      <!-- User Credentials & Balance Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-white/5 border border-white/5">
+        <div>
+          <label class="block text-[10px] text-gray-400 mb-1">รหัสผ่าน (Password)</label>
+          <div class="flex items-center gap-1.5">
+            <input type="text" id="ud-modal-password" class="w-full px-2.5 py-1.5 rounded-lg bg-black border border-white/10 text-white font-mono text-xs font-bold" />
+            <button onclick="saveUserPasswordFromModal()" title="บันทึกรหัสผ่านใหม่" class="px-2 py-1.5 rounded-lg bg-brand-primary text-white text-xs hover:brightness-110 shrink-0">
+              <i data-lucide="save" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[10px] text-gray-400 mb-1">ยอดเงินคงเหลือ (Balance)</label>
+          <div class="flex items-center gap-1.5">
+            <span id="ud-modal-balance" class="text-base font-bold text-brand-primary font-mono">฿0.00</span>
+            <button onclick="promptAdjustBalanceFromModal()" class="ml-auto px-2 py-1 rounded bg-brand-primary/20 hover:bg-brand-primary/30 border border-brand-primary/40 text-brand-primary text-[11px]">
+              ปรับเงิน
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[10px] text-gray-400 mb-1">อีเมล & วันที่สมัคร</label>
+          <div class="text-xs text-white truncate" id="ud-modal-email">-</div>
+          <div class="text-[10px] text-gray-400" id="ud-modal-registered">-</div>
+        </div>
+      </div>
+
+      <!-- Details Tabs (Purchases vs Topups) -->
+      <div class="space-y-3">
+        <div class="flex items-center gap-2 border-b border-white/10 pb-2">
+          <button id="ud-tab-btn-orders" onclick="switchUserDetailTab('orders')" class="px-3 py-1.5 rounded-lg bg-brand-primary text-white text-xs font-semibold flex items-center gap-1.5">
+            <i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i>
+            <span>ประวัติการซื้อสินค้า (<span id="ud-count-orders">0</span>)</span>
+          </button>
+          <button id="ud-tab-btn-topups" onclick="switchUserDetailTab('topups')" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-semibold flex items-center gap-1.5">
+            <i data-lucide="credit-card" class="w-3.5 h-3.5"></i>
+            <span>ประวัติการเติมเงิน (<span id="ud-count-topups">0</span>)</span>
+          </button>
+        </div>
+
+        <!-- Orders Table Content -->
+        <div id="ud-content-orders" class="space-y-2">
+          <div class="overflow-x-auto max-h-60 overflow-y-auto rounded-xl border border-white/5">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-black/50 sticky top-0 border-b border-white/10 text-[10px] uppercase text-gray-400">
+                <tr>
+                  <th class="py-2 px-3">เลขออเดอร์</th>
+                  <th class="py-2 px-3">สินค้า / แพ็กเกจ</th>
+                  <th class="py-2 px-3">ราคา</th>
+                  <th class="py-2 px-3">วันที่สั่งซื้อ</th>
+                  <th class="py-2 px-3 text-right">License Key</th>
+                </tr>
+              </thead>
+              <tbody id="ud-table-orders-body">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Topups Table Content -->
+        <div id="ud-content-topups" class="hidden space-y-2">
+          <div class="overflow-x-auto max-h-60 overflow-y-auto rounded-xl border border-white/5">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-black/50 sticky top-0 border-b border-white/10 text-[10px] uppercase text-gray-400">
+                <tr>
+                  <th class="py-2 px-3">เลขอ้างอิง</th>
+                  <th class="py-2 px-3">ช่องทาง</th>
+                  <th class="py-2 px-3">ยอดเติม</th>
+                  <th class="py-2 px-3">โบนัส</th>
+                  <th class="py-2 px-3">วันที่เติม</th>
+                  <th class="py-2 px-3 text-right">สถานะ</th>
+                </tr>
+              </thead>
+              <tbody id="ud-table-topups-body">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-white/10 flex justify-end">
+        <button onclick="closeUserDetailsModal()" class="px-5 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold">
+          ปิดหน้าต่าง
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== SECURITY: CLOUDFLARE-STYLE DDOS SHIELD CHALLENGE MODAL ==================== -->
+  <div id="security-challenge-modal" class="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl hidden items-center justify-center p-4">
+    <div class="bg-[#0e0a17] border border-brand-primary/40 rounded-3xl max-w-md w-full p-8 text-center space-y-6 shadow-2xl relative shadow-purple-900/40">
+      
+      <!-- Animated Radar Scanner -->
+      <div class="relative w-24 h-24 mx-auto flex items-center justify-center">
+        <div class="absolute inset-0 rounded-full border border-brand-primary/30 animate-ping"></div>
+        <div class="absolute inset-2 rounded-full border border-dashed border-brand-accent/50 orbital-spinner"></div>
+        <div class="w-16 h-16 rounded-2xl bg-brand-primary/20 border border-brand-primary flex items-center justify-center text-brand-primary shadow-lg shadow-purple-500/30">
+          <i data-lucide="shield-check" class="w-8 h-8"></i>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <span class="inline-block px-3 py-1 rounded-full text-[11px] font-bold bg-brand-primary text-white tracking-widest uppercase">
+          POWERX CLOUD SHIELD
+        </span>
+        <h3 class="text-xl font-black text-white">กำลังตรวจสอบความปลอดภัยเบราว์เซอร์</h3>
+        <p class="text-xs text-gray-400 max-w-xs mx-auto leading-relaxed">
+          ระบบตรวจพบการยิงคำขอจำนวนมากผิดปกติ (Anti-DDoS & Flood Protection) กรุณารอสักครู่เพื่อตรวจสอบว่าคุณไม่ใช่บอท
+        </p>
+      </div>
+
+      <div class="p-3.5 rounded-xl bg-black border border-white/10 text-left font-mono text-[11px] space-y-1 text-gray-300">
+        <div class="flex justify-between">
+          <span class="text-gray-500">Ray ID:</span>
+          <span id="sec-challenge-ray" class="text-brand-accent">px-waf-89fa2194</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-500">Security Level:</span>
+          <span class="text-green-400">HIGH (DDoS Mitigation)</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-500">Verifying:</span>
+          <span id="sec-challenge-status" class="text-brand-primary animate-pulse">Checking Environment...</span>
+        </div>
+      </div>
+
+      <!-- Countdown Progress -->
+      <div class="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+        <div id="sec-challenge-progress" class="bg-brand-primary h-full w-0 transition-all duration-300"></div>
+      </div>
+
+      <p class="text-[10px] text-gray-500">
+        การป้องกันโดย POWERX WAF Engine • ระบบจะนำคุณเข้าสู่หน้าเว็บโดยอัตโนมัติภายใน 3 วินาที
+      </p>
+    </div>
+  </div>
+
+  <!-- FLOATING SECURITY BADGE (BOTTOM-LEFT) -->
+  <div id="floating-security-badge" class="fixed bottom-4 left-4 z-40 hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/85 backdrop-blur-md border border-brand-primary/40 text-[11px] text-gray-300 shadow-xl shadow-purple-950/40 hover:border-brand-primary cursor-pointer transition-all" onclick="switchTab('admin'); switchAdminTab('security');">
+    <span class="w-2 h-2 rounded-full bg-green-400 animate-ping"></span>
+    <i data-lucide="shield-check" class="w-3.5 h-3.5 text-brand-primary"></i>
+    <span class="font-bold text-white">POWERX WAF</span>
+    <span class="text-brand-accent font-semibold">• DDoS SHIELD ACTIVE</span>
+  </div>
+
+  <!-- ==================== TOAST STACK (SILEO STACK) ==================== -->
+  <div id="toast-stack" class="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2.5 pointer-events-none max-w-sm w-full"></div>
+
+  <!-- APP JAVASCRIPT -->
+  <script src="assets/app.js?v=20261009_v5"></script>
+
+  <!-- In-page helper functions for modals -->
+  <script>
+    function openContactModal() {
+      document.getElementById('contact-modal').classList.remove('hidden');
+      document.getElementById('contact-modal').classList.add('flex');
+    }
+    function closeContactModal() {
+      document.getElementById('contact-modal').classList.add('hidden');
+      document.getElementById('contact-modal').classList.remove('flex');
+    }
+    function openPolicyModal(type) {
+      const modal = document.getElementById('policy-modal');
+      const title = document.getElementById('policy-modal-title');
+      const content = document.getElementById('policy-modal-content');
+      if (type === 'privacy') {
+        title.innerText = 'นโยบายความเป็นส่วนตัว';
+        content.innerHTML = `
+          <p>POWERXSTORE ให้ความสำคัญกับความปลอดภัยและข้อมูลส่วนบุคคลของผู้ใช้บริการทุกท่าน ข้อมูลการสั่งซื้อ คีย์ และการใช้งานจะถูกเข้ารหัสและรักษาความปลอดภัยสูงสุด</p>
+          <p>ทางร้านไม่มีนโยบายส่งต่อหรือเปิดเผยข้อมูลของผู้ใช้งานแก่บุคคลภายนอกโดยเด็ดขาด</p>
+        `;
+      } else {
+        title.innerText = 'ข้อกำหนดการใช้งาน';
+        content.innerHTML = `
+          <p>1. โปรแกรมและคีย์สินค้าทุกรายการจัดจำหน่ายเพื่อความบันเทิงและการทดสอบเท่านั้น</p>
+          <p>2. ห้ามมิให้นำ License Key ไปแชร์ แจกจ่าย หรือนำไปจำหน่ายต่อ หากตรวจพบจะระงับคีย์ทันที</p>
+          <p>3. สินค้าดิจิทัลเมื่อจัดส่งแล้วจะไม่สามารถขอคืนเงินได้ ยกเว้นกรณีปัญหาทางเทคนิคที่ไม่สามารถแก้ไขได้</p>
+        `;
+      }
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+    function closePolicyModal() {
+      document.getElementById('policy-modal').classList.add('hidden');
+      document.getElementById('policy-modal').classList.remove('flex');
+    }
+  </script>
+</body>
+</html>
