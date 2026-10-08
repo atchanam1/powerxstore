@@ -1933,84 +1933,264 @@ function saveStoreSettings(e) {
 
 // 4. Admin Users Management & Drill-Down History
 let activeDetailUsername = null;
+let activeUserFilter = 'active'; // 'active' (default), 'banned', or 'all'
+let userSearchKeyword = '';
+
+function switchUserListFilter(filter) {
+  activeUserFilter = filter;
+
+  const btnActive = document.getElementById('user-subtab-active');
+  const btnBanned = document.getElementById('user-subtab-banned');
+  const btnAll = document.getElementById('user-subtab-all');
+
+  [btnActive, btnBanned, btnAll].forEach(b => {
+    if (b) {
+      b.className = 'px-3.5 py-1.5 rounded-xl bg-transparent hover:bg-white/5 text-gray-400 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-all';
+    }
+  });
+
+  if (filter === 'active' && btnActive) {
+    btnActive.className = 'px-3.5 py-1.5 rounded-xl bg-brand-primary text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all';
+  } else if (filter === 'banned' && btnBanned) {
+    btnBanned.className = 'px-3.5 py-1.5 rounded-xl bg-red-600/30 border border-red-500/40 text-red-300 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all';
+  } else if (filter === 'all' && btnAll) {
+    btnAll.className = 'px-3.5 py-1.5 rounded-xl bg-white/15 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all';
+  }
+
+  renderAdminUsers();
+}
+
+function handleUserSearchInput(val) {
+  userSearchKeyword = (val || '').trim().toLowerCase();
+  renderAdminUsers();
+}
+
+function deleteUser(username) {
+  if (username === 'admin') {
+    showNotification('ไม่สามารถลบบัญชีแอดมินหลักได้', 'warning');
+    return;
+  }
+
+  if (!confirm(`⚠️ ยืนยันการลบสมาชิก: "${username}" ใช่หรือไม่?\n\nเมื่อลบแล้ว บัญชีนี้จะถูกลบออกจากระบบและ Cloud Database อย่างถาวร ไม่สามารถกู้คืนได้`)) {
+    return;
+  }
+
+  const idx = APP_STATE.users.findIndex(u => u.username === username);
+  if (idx !== -1) {
+    APP_STATE.users.splice(idx, 1);
+    localStorage.setItem('px_users', JSON.stringify(APP_STATE.users));
+
+    if (APP_STATE.currentUser && APP_STATE.currentUser.username === username) {
+      APP_STATE.currentUser = null;
+      localStorage.removeItem('px_currentUser');
+      updateAuthUI();
+    }
+
+    cloudSyncAction('delete_user', { username });
+    renderAdminUsers();
+    closeUserDetailsModal();
+    showNotification(`🗑️ ลบสมาชิก ${username} ออกจากระบบเรียบร้อยแล้ว`, 'info');
+  }
+}
 
 function renderAdminUsers() {
+  const activeUsers = APP_STATE.users.filter(u => !u.isBanned);
+  const bannedUsers = APP_STATE.users.filter(u => !!u.isBanned);
+
+  // Update Counters
   const uCount = document.getElementById('admin-subtab-count-users');
   if (uCount) uCount.textContent = APP_STATE.users.length;
 
+  const countActiveEl = document.getElementById('user-count-active');
+  if (countActiveEl) countActiveEl.textContent = activeUsers.length;
+
+  const countBannedEl = document.getElementById('user-count-banned');
+  if (countBannedEl) countBannedEl.textContent = bannedUsers.length;
+
+  const countAllEl = document.getElementById('user-count-all');
+  if (countAllEl) countAllEl.textContent = APP_STATE.users.length;
+
+  const tableHead = document.getElementById('admin-users-table-head');
   const table = document.getElementById('admin-users-table');
   if (!table) return;
 
-  table.innerHTML = APP_STATE.users.map(u => `
-    <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors ${u.isBanned ? 'bg-red-500/[0.04]' : ''}">
-      <td class="py-3 px-4">
-        <div class="font-bold text-xs text-white flex items-center gap-1.5 flex-wrap">
-          <span>${u.username}</span>
-          ${APP_STATE.currentUser && APP_STATE.currentUser.username === u.username ? `
-            <span class="text-[9px] bg-brand-primary/20 border border-brand-primary/40 text-brand-accent px-1.5 py-0.5 rounded font-mono">คุณ</span>
-          ` : ''}
-          ${u.isBanned ? `
-            <span class="text-[9px] bg-red-500/20 border border-red-500/40 text-red-400 px-1.5 py-0.5 rounded font-bold inline-flex items-center gap-1">
-              <i data-lucide="ban" class="w-2.5 h-2.5"></i>
-              <span>ถูกแบน</span>
+  // Filter based on active tab
+  let displayList = APP_STATE.users;
+  if (activeUserFilter === 'active') {
+    displayList = activeUsers;
+  } else if (activeUserFilter === 'banned') {
+    displayList = bannedUsers;
+  }
+
+  // Filter by search keyword
+  if (userSearchKeyword) {
+    displayList = displayList.filter(u => 
+      u.username.toLowerCase().includes(userSearchKeyword) || 
+      (u.email || '').toLowerCase().includes(userSearchKeyword) ||
+      (u.banReason || '').toLowerCase().includes(userSearchKeyword)
+    );
+  }
+
+  // Update table header dynamically
+  if (tableHead) {
+    if (activeUserFilter === 'banned') {
+      tableHead.innerHTML = `
+        <tr class="border-b border-red-500/20 bg-red-950/20 text-[11px] font-semibold text-red-300 uppercase">
+          <th class="py-3 px-4">ผู้ใช้งานที่ถูกแบน (Username)</th>
+          <th class="py-3 px-4">รหัสผ่าน (Password)</th>
+          <th class="py-3 px-4">เหตุผลในการแบน</th>
+          <th class="py-3 px-4">วันที่ถูกแบน</th>
+          <th class="py-3 px-4 text-right">การจัดการ (ปลดแบน / ลบ)</th>
+        </tr>
+      `;
+    } else {
+      tableHead.innerHTML = `
+        <tr class="border-b border-white/10 bg-white/5 text-[11px] font-semibold text-gray-400 uppercase">
+          <th class="py-3 px-4">ผู้ใช้งาน (Username)</th>
+          <th class="py-3 px-4">รหัสผ่าน (Password)</th>
+          <th class="py-3 px-4">สถานะ & สิทธิ์</th>
+          <th class="py-3 px-4">ยอดเงินคงเหลือ</th>
+          <th class="py-3 px-4 text-right">การจัดการ & แบน & ลบ</th>
+        </tr>
+      `;
+    }
+  }
+
+  if (displayList.length === 0) {
+    const emptyMsg = activeUserFilter === 'banned' 
+      ? '🎉 ไม่มีสมาชิกที่ถูกแบนในระบบ' 
+      : (userSearchKeyword ? `ไม่พบสมาชิกที่ตรงกับคำค้นหา "${userSearchKeyword}"` : 'ยังไม่มีสมาชิกในหมวดหมู่นี้');
+    table.innerHTML = `
+      <tr>
+        <td colspan="5" class="py-10 text-center text-gray-500 text-xs">
+          ${emptyMsg}
+        </td>
+      </tr>
+    `;
+    if (window.lucide) lucide.createIcons();
+    return;
+  }
+
+  if (activeUserFilter === 'banned') {
+    // BANNED VIEW
+    table.innerHTML = displayList.map(u => `
+      <tr class="border-b border-red-500/10 hover:bg-red-500/[0.04] transition-colors">
+        <td class="py-3 px-4">
+          <div class="font-bold text-xs text-white flex items-center gap-1.5">
+            <span class="text-red-400 font-mono">${u.username}</span>
+            <span class="text-[9px] bg-red-500/20 border border-red-500/40 text-red-400 px-1.5 py-0.5 rounded font-bold">แบน</span>
+          </div>
+          <div class="text-[10px] text-gray-400 font-mono">${u.email || '-'}</div>
+        </td>
+        <td class="py-3 px-4">
+          <div class="flex items-center gap-1.5">
+            <span class="font-mono text-xs text-brand-accent bg-black/60 px-2 py-1 rounded-lg border border-white/10 select-all font-bold">${u.password || '••••••••'}</span>
+            <button onclick="copyToClipboard('${u.password}')" title="คัดลอกรหัสผ่าน" class="p-1 rounded hover:bg-white/10 text-gray-400 hover:text-white transition-colors">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </td>
+        <td class="py-3 px-4">
+          <div class="text-xs text-red-300 font-medium">
+            <i data-lucide="shield-alert" class="w-3 h-3 text-red-400 inline mr-1"></i>
+            <span>${u.banReason || 'ละเมิดข้อกำหนด'}</span>
+          </div>
+        </td>
+        <td class="py-3 px-4 text-[11px] text-gray-400 font-mono">
+          ${u.bannedAt || '-'}
+        </td>
+        <td class="py-3 px-4 text-right space-x-1 whitespace-nowrap">
+          <button onclick="openUserDetailsModal('${u.username}')" class="px-2.5 py-1 rounded-lg bg-brand-primary/20 border border-brand-primary/40 text-brand-primary hover:bg-brand-primary/30 text-xs font-semibold inline-flex items-center gap-1 transition-all">
+            <i data-lucide="eye" class="w-3 h-3"></i>
+            <span>ดูประวัติ</span>
+          </button>
+          <button onclick="unbanUser('${u.username}')" class="px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30 text-xs font-semibold inline-flex items-center gap-1 transition-all shadow-sm">
+            <i data-lucide="check-circle" class="w-3 h-3"></i>
+            <span>ปลดแบน</span>
+          </button>
+          <button onclick="deleteUser('${u.username}')" class="px-2.5 py-1 rounded-lg bg-red-600/20 border border-red-500/40 text-red-400 hover:bg-red-600 hover:text-white text-xs font-semibold inline-flex items-center gap-1 transition-all" title="ลบผู้ใช้นี้ออกจากระบบถาวร">
+            <i data-lucide="trash-2" class="w-3 h-3"></i>
+            <span>ลบสมาชิก</span>
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  } else {
+    // ACTIVE / ALL VIEW
+    table.innerHTML = displayList.map(u => `
+      <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors ${u.isBanned ? 'bg-red-500/[0.04]' : ''}">
+        <td class="py-3 px-4">
+          <div class="font-bold text-xs text-white flex items-center gap-1.5 flex-wrap">
+            <span>${u.username}</span>
+            ${APP_STATE.currentUser && APP_STATE.currentUser.username === u.username ? `
+              <span class="text-[9px] bg-brand-primary/20 border border-brand-primary/40 text-brand-accent px-1.5 py-0.5 rounded font-mono">คุณ</span>
+            ` : ''}
+            ${u.isBanned ? `
+              <span class="text-[9px] bg-red-500/20 border border-red-500/40 text-red-400 px-1.5 py-0.5 rounded font-bold inline-flex items-center gap-1">
+                <i data-lucide="ban" class="w-2.5 h-2.5"></i>
+                <span>ถูกแบน</span>
+              </span>
+            ` : ''}
+          </div>
+          <div class="text-[10px] text-gray-400 font-mono">${u.email || '-'}</div>
+        </td>
+        <td class="py-3 px-4">
+          <div class="flex items-center gap-1.5">
+            <span class="font-mono text-xs text-brand-accent bg-black/60 px-2.5 py-1 rounded-lg border border-white/10 select-all font-bold tracking-wide">${u.password || '••••••••'}</span>
+            <button onclick="copyToClipboard('${u.password}')" title="คัดลอกรหัสผ่าน" class="p-1 rounded hover:bg-white/10 text-gray-400 hover:text-brand-primary transition-colors">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </td>
+        <td class="py-3 px-4">
+          <div class="space-y-0.5">
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${u.role === 'Admin' ? 'bg-brand-primary text-white shadow-sm shadow-purple-500/30' : (u.isBanned ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-white/10 text-gray-300')}">
+              ${u.isBanned ? 'ระงับการใช้งาน' : u.role}
             </span>
-          ` : ''}
-        </div>
-        <div class="text-[10px] text-gray-400 font-mono">${u.email || '-'}</div>
-      </td>
-      <td class="py-3 px-4">
-        <div class="flex items-center gap-1.5">
-          <span class="font-mono text-xs text-brand-accent bg-black/60 px-2.5 py-1 rounded-lg border border-white/10 select-all font-bold tracking-wide">${u.password || '••••••••'}</span>
-          <button onclick="copyToClipboard('${u.password}')" title="คัดลอกรหัสผ่าน" class="p-1 rounded hover:bg-white/10 text-gray-400 hover:text-brand-primary transition-colors">
-            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            ${u.isBanned ? `
+              <div class="text-[10px] text-red-400 font-medium max-w-[160px] truncate" title="${u.banReason}">
+                เหตุผล: ${u.banReason || 'ละเมิดกฎร้าน'}
+              </div>
+            ` : ''}
+          </div>
+        </td>
+        <td class="py-3 px-4 text-xs font-bold font-mono ${u.balance > 0 ? 'text-brand-primary' : 'text-gray-400'}">
+          ฿${Number(u.balance).toFixed(2)}
+        </td>
+        <td class="py-3 px-4 text-right space-x-1 whitespace-nowrap">
+          <button onclick="openUserDetailsModal('${u.username}')" class="px-2.5 py-1 rounded-lg bg-brand-primary/20 border border-brand-primary/40 text-brand-primary hover:bg-brand-primary/30 text-xs font-semibold inline-flex items-center gap-1 transition-all">
+            <i data-lucide="eye" class="w-3 h-3"></i>
+            <span>ดูประวัติ</span>
           </button>
-        </div>
-      </td>
-      <td class="py-3 px-4">
-        <div class="space-y-0.5">
-          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${u.role === 'Admin' ? 'bg-brand-primary text-white shadow-sm shadow-purple-500/30' : (u.isBanned ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-white/10 text-gray-300')}">
-            ${u.isBanned ? 'ระงับการใช้งาน' : u.role}
-          </span>
-          ${u.isBanned ? `
-            <div class="text-[10px] text-red-400 font-medium max-w-[160px] truncate" title="${u.banReason}">
-              เหตุผล: ${u.banReason || 'ละเมิดกฎร้าน'}
-            </div>
-          ` : ''}
-        </div>
-      </td>
-      <td class="py-3 px-4 text-xs font-bold font-mono ${u.balance > 0 ? 'text-brand-primary' : 'text-gray-400'}">
-        ฿${Number(u.balance).toFixed(2)}
-      </td>
-      <td class="py-3 px-4 text-right space-x-1 whitespace-nowrap">
-        <button onclick="openUserDetailsModal('${u.username}')" class="px-2.5 py-1 rounded-lg bg-brand-primary/20 border border-brand-primary/40 text-brand-primary hover:bg-brand-primary/30 text-xs font-semibold inline-flex items-center gap-1 transition-all">
-          <i data-lucide="eye" class="w-3 h-3"></i>
-          <span>ดูประวัติ</span>
-        </button>
-        <button onclick="openBalanceModal('${u.username}')" class="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 text-xs transition-colors" title="ปรับยอดเงิน / กำหนดเงิน">
-          ปรับเงิน
-        </button>
-        <button onclick="resetUserBalanceToZero('${u.username}')" class="px-2 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 text-xs font-semibold transition-colors" title="ตั้งยอดเงินเป็น ฿0 ทันที">
-          รีเซ็ต ฿0
-        </button>
-        ${u.username !== 'admin' ? `
-          <button onclick="toggleUserRole('${u.username}')" class="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-gray-400 hover:text-yellow-400 hover:bg-white/10 text-xs transition-colors" title="เปลี่ยนสถานะ Admin/Member">
-            สิทธิ์
+          <button onclick="openBalanceModal('${u.username}')" class="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 text-xs transition-colors" title="ปรับยอดเงิน / กำหนดเงิน">
+            ปรับเงิน
           </button>
-          ${u.isBanned ? `
-            <button onclick="unbanUser('${u.username}')" class="px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30 text-xs font-semibold inline-flex items-center gap-1 transition-all">
-              <i data-lucide="check-circle" class="w-3 h-3"></i>
-              <span>ปลดแบน</span>
+          <button onclick="resetUserBalanceToZero('${u.username}')" class="px-2 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 text-xs font-semibold transition-colors" title="ตั้งยอดเงินเป็น ฿0 ทันที">
+            รีเซ็ต ฿0
+          </button>
+          ${u.username !== 'admin' ? `
+            <button onclick="toggleUserRole('${u.username}')" class="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-gray-400 hover:text-yellow-400 hover:bg-white/10 text-xs transition-colors" title="เปลี่ยนสถานะ Admin/Member">
+              สิทธิ์
             </button>
-          ` : `
-            <button onclick="openBanModal('${u.username}')" class="px-2.5 py-1 rounded-lg bg-red-600/20 border border-red-500/40 text-red-400 hover:bg-red-600 hover:text-white text-xs font-semibold inline-flex items-center gap-1 transition-all">
-              <i data-lucide="ban" class="w-3 h-3"></i>
-              <span>แบน</span>
+            ${u.isBanned ? `
+              <button onclick="unbanUser('${u.username}')" class="px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30 text-xs font-semibold inline-flex items-center gap-1 transition-all">
+                <i data-lucide="check-circle" class="w-3 h-3"></i>
+                <span>ปลดแบน</span>
+              </button>
+            ` : `
+              <button onclick="openBanModal('${u.username}')" class="px-2.5 py-1 rounded-lg bg-red-600/20 border border-red-500/40 text-red-400 hover:bg-red-600 hover:text-white text-xs font-semibold inline-flex items-center gap-1 transition-all">
+                <i data-lucide="ban" class="w-3 h-3"></i>
+                <span>แบน</span>
+              </button>
+            `}
+            <button onclick="deleteUser('${u.username}')" class="px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-gray-400 hover:text-red-400 hover:bg-red-500/20 text-xs transition-colors" title="ลบสมาชิก">
+              <i data-lucide="trash-2" class="w-3 h-3 inline"></i>
             </button>
-          `}
-        ` : ''}
-      </td>
-    </tr>
-  `).join('');
+          ` : ''}
+        </td>
+      </tr>
+    `).join('');
+  }
 
   if (window.lucide) lucide.createIcons();
 }

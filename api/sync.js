@@ -280,7 +280,30 @@ module.exports = async (req, res) => {
       });
     }
 
-    // 7. RECORD ORDER
+    // 7. DELETE USER
+    if (action === 'delete_user') {
+      const { username } = payload || {};
+      if (!username) {
+        return res.status(400).json({ success: false, message: 'กรุณาระบุชื่อผู้ใช้ที่ต้องการลบ' });
+      }
+      if (username === 'admin') {
+        return res.status(400).json({ success: false, message: 'ไม่สามารถลบบัญชีแอดมินหลักได้' });
+      }
+
+      const idx = db.users.findIndex(u => u.username === username);
+      if (idx !== -1) {
+        db.users.splice(idx, 1);
+        await updateGistData(db);
+        return res.status(200).json({
+          success: true,
+          message: `ลบผู้ใช้ ${username} ออกจากระบบเรียบร้อยแล้ว`,
+          users: db.users
+        });
+      }
+      return res.status(404).json({ success: false, message: 'ไม่พบผู้ใช้ในระบบ' });
+    }
+
+    // 8. RECORD ORDER
     if (action === 'add_order') {
       const { order } = payload || {};
       if (order) {

@@ -1084,16 +1084,41 @@
             </div>
           </div>
 
+          <!-- USER FILTER TABS & SEARCH -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+            <!-- Filter Tabs -->
+            <div class="flex items-center gap-1.5 bg-black/40 p-1 rounded-2xl border border-white/10 w-fit">
+              <button id="user-subtab-active" onclick="switchUserListFilter('active')" class="px-3.5 py-1.5 rounded-xl bg-brand-primary text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all">
+                <i data-lucide="users" class="w-3.5 h-3.5"></i>
+                <span>สมาชิกปกติ (<span id="user-count-active">0</span>)</span>
+              </button>
+              <button id="user-subtab-banned" onclick="switchUserListFilter('banned')" class="px-3.5 py-1.5 rounded-xl bg-transparent hover:bg-white/5 text-gray-400 hover:text-red-300 text-xs font-semibold flex items-center gap-1.5 transition-all">
+                <i data-lucide="ban" class="w-3.5 h-3.5 text-red-400"></i>
+                <span>รายชื่อที่ถูกแบน (<span id="user-count-banned" class="text-red-400 font-bold">0</span>)</span>
+              </button>
+              <button id="user-subtab-all" onclick="switchUserListFilter('all')" class="px-3.5 py-1.5 rounded-xl bg-transparent hover:bg-white/5 text-gray-400 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-all">
+                <i data-lucide="list" class="w-3.5 h-3.5"></i>
+                <span>ทั้งหมด (<span id="user-count-all">0</span>)</span>
+              </button>
+            </div>
+
+            <!-- Search Filter -->
+            <div class="relative max-w-xs w-full">
+              <i data-lucide="search" class="w-3.5 h-3.5 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+              <input type="text" id="admin-user-search-input" oninput="handleUserSearchInput(this.value)" placeholder="ค้นหาชื่อผู้ใช้หรืออีเมล..." class="w-full pl-9 pr-3 py-1.5 rounded-xl bg-black/60 border border-white/10 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-brand-primary" />
+            </div>
+          </div>
+
           <div class="bg-[#0e0a17] rounded-2xl border border-white/10 overflow-hidden shadow-xl">
             <div class="overflow-x-auto">
               <table class="w-full text-left border-collapse">
-                <thead>
+                <thead id="admin-users-table-head">
                   <tr class="border-b border-white/10 bg-white/5 text-[11px] font-semibold text-gray-400 uppercase">
                     <th class="py-3 px-4">ผู้ใช้งาน (Username)</th>
                     <th class="py-3 px-4">รหัสผ่าน (Password)</th>
                     <th class="py-3 px-4">สถานะ & สิทธิ์</th>
                     <th class="py-3 px-4">ยอดเงินคงเหลือ</th>
-                    <th class="py-3 px-4 text-right">การจัดการ & แบน & ยอดเงิน</th>
+                    <th class="py-3 px-4 text-right">การจัดการ & แบน & ลบ</th>
                   </tr>
                 </thead>
                 <tbody id="admin-users-table">
