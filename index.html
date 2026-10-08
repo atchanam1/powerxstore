@@ -790,12 +790,28 @@
 
         <!-- SUBPANEL 1: PRODUCTS -->
         <div id="admin-panel-products" class="admin-tab-content space-y-4">
-          <div class="flex items-center justify-between">
-            <h3 class="font-bold text-sm text-white">รายการสินค้าทั้งหมด</h3>
-            <button onclick="openProductAdminModal(true)" class="brand-btn-primary px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-md">
-              <i data-lucide="plus" class="w-4 h-4"></i>
-              <span>เพิ่มสินค้าใหม่</span>
-            </button>
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 class="font-bold text-sm text-white">รายการสินค้าทั้งหมด</h3>
+              <p class="text-[11px] text-gray-400">ควบคุมสถานะจำหน่าย โหมดไม่พร้อมให้บริการ และเปิด-ปิดป๊อปอัพโชว์สินค้าแบบเรียลไทม์</p>
+            </div>
+            <div class="flex items-center flex-wrap gap-2">
+              <div class="inline-flex items-center bg-white/5 border border-white/10 rounded-xl p-1 text-[11px]">
+                <button type="button" onclick="toggleAllProductsPopup(true)" class="px-2.5 py-1 rounded-lg text-purple-300 hover:bg-white/10 transition-colors flex items-center gap-1" title="เปิดแสดงป๊อปอัพทุกสินค้า">
+                  <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                  <span>เปิดป๊อปอัพทั้งหมด</span>
+                </button>
+                <button type="button" onclick="toggleAllProductsPopup(false)" class="px-2.5 py-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors flex items-center gap-1" title="ปิดแสดงป๊อปอัพทุกสินค้า">
+                  <i data-lucide="eye-off" class="w-3.5 h-3.5"></i>
+                  <span>ปิดป๊อปอัพทั้งหมด</span>
+                </button>
+              </div>
+
+              <button onclick="openProductAdminModal(true)" class="brand-btn-primary px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-md">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span>เพิ่มสินค้าใหม่</span>
+              </button>
+            </div>
           </div>
 
           <div class="bg-[#0e0a17] rounded-2xl border border-white/10 overflow-hidden shadow-xl">
@@ -807,6 +823,8 @@
                     <th class="py-3 px-4">ราคา</th>
                     <th class="py-3 px-4">สต็อก</th>
                     <th class="py-3 px-4">ขายแล้ว</th>
+                    <th class="py-3 px-4 text-center">สถานะจำหน่าย</th>
+                    <th class="py-3 px-4 text-center">ป๊อปอัพโชว์สินค้า</th>
                     <th class="py-3 px-4 text-right">จัดการ</th>
                   </tr>
                 </thead>
@@ -1659,11 +1677,37 @@
           </div>
         </div>
 
-        <div class="flex items-center pt-1">
-          <label class="flex items-center gap-2 cursor-pointer text-xs text-gray-300">
-            <input type="checkbox" id="admin-prod-hot" class="accent-brand-primary" />
-            <span>ติดป้าย "ยอดฮิต" (Hot Item)</span>
-          </label>
+        <div class="space-y-2 pt-1">
+          <div class="flex items-center">
+            <label class="flex items-center gap-2 cursor-pointer text-xs text-gray-300">
+              <input type="checkbox" id="admin-prod-hot" class="accent-brand-primary" />
+              <span>ติดป้าย "ยอดฮิต" (Hot Item)</span>
+            </label>
+          </div>
+
+          <!-- Mode Switches: Maintenance Mode & Popup Toggle -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 p-3 rounded-xl bg-white/5 border border-white/10">
+            <label class="flex items-start gap-2.5 cursor-pointer text-xs text-gray-300 hover:text-white">
+              <input type="checkbox" id="admin-prod-maintenance" class="accent-red-500 w-4 h-4 rounded mt-0.5" />
+              <div>
+                <span class="font-semibold text-red-400 flex items-center gap-1">
+                  <i data-lucide="alert-octagon" class="w-3.5 h-3.5 text-red-400"></i>
+                  <span>โหมดไม่พร้อมให้บริการ</span>
+                </span>
+                <span class="block text-[10px] text-gray-400">เปิดเมื่อสินค้ามีปัญหา (ลูกค้าจะกดซื้อไม่ได้)</span>
+              </div>
+            </label>
+            <label class="flex items-start gap-2.5 cursor-pointer text-xs text-gray-300 hover:text-white">
+              <input type="checkbox" id="admin-prod-popup" checked class="accent-purple-500 w-4 h-4 rounded mt-0.5" />
+              <div>
+                <span class="font-semibold text-purple-300 flex items-center gap-1">
+                  <i data-lucide="eye" class="w-3.5 h-3.5 text-purple-400"></i>
+                  <span>เปิดแสดงป๊อปอัพสินค้า</span>
+                </span>
+                <span class="block text-[10px] text-gray-400">แสดงหน้าต่างข้อมูลและปุ่มสั่งซื้อ</span>
+              </div>
+            </label>
+          </div>
         </div>
 
         <!-- Image upload & preview -->
@@ -1865,8 +1909,18 @@
       <div class="px-4 sm:px-5 space-y-4 overflow-y-auto flex-1">
         <div class="w-full aspect-video rounded-xl overflow-hidden bg-black/50 relative border border-white/5">
           <img id="modal-product-img" src="" alt="" class="w-full h-full object-cover" />
-          <div class="absolute bottom-2 left-2 px-2 py-0.5 rounded-full bg-brand-primary/20 border border-purple-500/40 text-[10px] text-brand-primary font-semibold">
-            STATUS: OPERATIONAL
+          <div id="modal-product-status-badge" class="absolute bottom-2 left-2 px-2.5 py-0.5 rounded-full bg-brand-primary/20 border border-purple-500/40 text-[10px] text-brand-primary font-semibold flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span>STATUS: OPERATIONAL</span>
+          </div>
+        </div>
+
+        <!-- Maintenance Mode Alert Banner -->
+        <div id="modal-product-maintenance-alert" class="hidden p-3 rounded-xl bg-red-500/15 border border-red-500/40 text-red-300 text-xs flex items-center gap-2.5 shadow-inner">
+          <i data-lucide="alert-octagon" class="w-5 h-5 shrink-0 text-red-400"></i>
+          <div>
+            <div class="font-bold text-red-300">สินค้านี้ไม่พร้อมให้บริการชั่วคราว</div>
+            <div class="text-[11px] text-red-400/90">เนื่องจากระบบอยู่ระหว่างการปรับปรุงหรือตรวจเช็ค จึงปิดรับการสั่งซื้อชั่วคราว</div>
           </div>
         </div>
 
@@ -1897,7 +1951,7 @@
           <div class="text-[10px] text-gray-400">ยอดชำระทั้งหมด:</div>
           <div id="modal-pay-amount" class="text-xl font-bold text-brand-primary">฿0.00</div>
         </div>
-        <button onclick="confirmPurchase()" class="brand-btn-primary px-6 py-2.5 rounded-xl font-semibold text-xs flex items-center gap-2">
+        <button id="modal-confirm-buy-btn" onclick="confirmPurchase()" class="brand-btn-primary px-6 py-2.5 rounded-xl font-semibold text-xs flex items-center gap-2">
           <i data-lucide="shopping-bag" class="w-4 h-4"></i>
           <span>ยืนยันการซื้อสินค้า</span>
         </button>

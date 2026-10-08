@@ -204,6 +204,17 @@ const DEFAULT_USERS = [
     isBanned: false,
     banReason: "",
     bannedAt: ""
+  },
+  {
+    username: "bonus1235",
+    password: "••••••••",
+    email: "bonus1235@powerxstore.xyz",
+    role: "Member",
+    balance: 0,
+    registeredAt: "08/10/2026",
+    isBanned: false,
+    banReason: "",
+    bannedAt: ""
   }
 ];
 
@@ -699,10 +710,14 @@ function renderProducts() {
     return;
   }
 
-  const productHTML = filtered.map(p => `
-    <div class="product-card group relative flex flex-col rounded-2xl border border-white/10 bg-[#0e0a17]/90 dark:bg-[#0e0a17]/90 backdrop-blur-md overflow-hidden shadow-xl">
+  const productHTML = filtered.map(p => {
+    const isMaintenance = (p.status === 'MAINTENANCE' || p.isAvailable === false);
+    const hasPopup = (p.showPopup !== false);
+
+    return `
+    <div class="product-card group relative flex flex-col rounded-2xl border ${isMaintenance ? 'border-red-500/20' : 'border-white/10'} bg-[#0e0a17]/90 dark:bg-[#0e0a17]/90 backdrop-blur-md overflow-hidden shadow-xl transition-all duration-300">
       <!-- Hot Champion Flame Badge -->
-      ${p.isHot ? `
+      ${p.isHot && !isMaintenance ? `
         <div class="absolute top-3 right-3 z-30 pointer-events-none">
           <div class="hot-champion relative inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-white text-[11px] font-semibold tracking-wider">
             <svg class="w-3.5 h-3.5 fill-white" viewBox="0 0 24 24">
@@ -714,22 +729,30 @@ function renderProducts() {
       ` : ''}
 
       <!-- Product Image Thumbnail -->
-      <div class="relative w-full aspect-square overflow-hidden bg-black/40 cursor-pointer" onclick="openProductModal('${p.id}')">
-        <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
+      <div class="relative w-full aspect-square overflow-hidden bg-black/40 ${isMaintenance ? 'cursor-not-allowed' : 'cursor-pointer'}" onclick="handleProductClick('${p.id}')">
+        <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${isMaintenance ? 'grayscale contrast-125' : ''}" loading="lazy" />
         
-        <!-- Hover Radial Ring Overlay -->
-        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-          <div class="relative w-20 h-20 flex items-center justify-center">
-            <!-- Rotating SVG ring -->
-            <svg class="absolute inset-0 w-full h-full orbital-spinner" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="44" fill="none" stroke="#A855F7" stroke-width="2.5" stroke-dasharray="140 100" stroke-linecap="round"/>
-            </svg>
-            <svg class="absolute inset-0 w-full h-full orbital-spinner-rev" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="36" fill="none" stroke="#C084FC" stroke-width="1.5" stroke-dasharray="6 8" stroke-opacity="0.6"/>
-            </svg>
-            <img src="assets/logo.png?v=20261009_v2" class="w-10 h-10 object-contain drop-shadow-[0_0_10px_#A855F7]" alt="Logo" style="mix-blend-mode: screen;" />
+        ${isMaintenance ? `
+          <!-- Centered Dark Pill Badge: ไม่พร้อมจำหน่าย (Matching User's Reference Screenshot) -->
+          <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+            <div class="px-5 py-2 rounded-xl bg-[#1e2532]/95 border border-slate-600/70 shadow-2xl text-white font-bold text-xs tracking-wide flex items-center gap-1.5 drop-shadow-lg">
+              <span>ไม่พร้อมจำหน่าย</span>
+            </div>
           </div>
-        </div>
+        ` : `
+          <!-- Hover Radial Ring Overlay -->
+          <div class="absolute inset-0 bg-black/70 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+            <div class="relative w-20 h-20 flex items-center justify-center">
+              <svg class="absolute inset-0 w-full h-full orbital-spinner" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="44" fill="none" stroke="#A855F7" stroke-width="2.5" stroke-dasharray="140 100" stroke-linecap="round"/>
+              </svg>
+              <svg class="absolute inset-0 w-full h-full orbital-spinner-rev" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="36" fill="none" stroke="#C084FC" stroke-width="1.5" stroke-dasharray="6 8" stroke-opacity="0.6"/>
+              </svg>
+              <img src="assets/logo.png?v=20261009_v2" class="w-10 h-10 object-contain drop-shadow-[0_0_10px_#A855F7]" alt="Logo" style="mix-blend-mode: screen;" />
+            </div>
+          </div>
+        `}
 
         <!-- Watermark Mini Logo -->
         <div class="absolute bottom-2 right-2 opacity-20 pointer-events-none group-hover:opacity-40 transition-opacity">
@@ -740,8 +763,11 @@ function renderProducts() {
       <!-- Content Meta -->
       <div class="p-4 flex-1 flex flex-col justify-between">
         <div>
-          <span class="inline-block text-[11px] font-medium text-brand-primary tracking-wide mb-1 uppercase">${p.categoryName || p.category}</span>
-          <h3 class="text-base font-semibold text-white group-hover:text-brand-primary transition-colors line-clamp-1 cursor-pointer" onclick="openProductModal('${p.id}')">
+          <div class="flex items-center justify-between mb-1">
+            <span class="inline-block text-[11px] font-medium text-brand-primary tracking-wide uppercase">${p.categoryName || p.category}</span>
+            ${!hasPopup ? `<span class="text-[9px] px-1.5 py-0.5 rounded bg-gray-500/15 border border-gray-500/30 text-gray-400 font-mono">ปิดป๊อปอัพ</span>` : ''}
+          </div>
+          <h3 class="text-base font-semibold ${isMaintenance ? 'text-red-400' : 'text-white group-hover:text-brand-primary'} transition-colors line-clamp-1 ${isMaintenance ? 'cursor-default' : 'cursor-pointer'}" onclick="handleProductClick('${p.id}')">
             ${p.name}
           </h3>
           <p class="text-xs text-muted-foreground mt-1 line-clamp-2 font-light">${p.description}</p>
@@ -750,26 +776,43 @@ function renderProducts() {
         <div class="mt-4 pt-3 border-t border-white/5">
           <div class="flex items-baseline justify-between mb-2">
             <div class="flex items-baseline gap-1.5">
-              <span class="text-xl font-bold text-brand-primary">฿${p.price}</span>
+              <span class="text-xl font-bold ${isMaintenance ? 'text-red-400' : 'text-brand-primary'}">฿${p.price}</span>
               ${p.originalPrice ? `<span class="text-xs text-muted-foreground/60 line-through">฿${p.originalPrice}</span>` : ''}
             </div>
-            <span class="text-[11px] text-muted-foreground">เหลือ ${p.stock} ชิ้น</span>
+            ${isMaintenance ? `
+              <span class="text-[11px] text-red-400 font-medium">ไม่พร้อมจำหน่าย</span>
+            ` : `
+              <span class="text-[11px] text-muted-foreground">เหลือ ${p.stock} ชิ้น</span>
+            `}
           </div>
 
           <div class="space-y-2">
-            <button onclick="openProductModal('${p.id}')" class="w-full brand-btn-primary py-2 px-3 rounded-xl text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-md">
-              <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
-              <span>ซื้อเลย</span>
-            </button>
-            <div class="flex items-center justify-center gap-1 text-[11px] text-muted-foreground/75">
-              <i data-lucide="flame" class="w-3 h-3 text-pink-400"></i>
-              <span>ขายไปแล้ว ${p.sold} ชิ้น</span>
-            </div>
+            ${isMaintenance ? `
+              <!-- Disabled Button: ไม่พร้อมจำหน่าย (Matching User's Reference Screenshot) -->
+              <button disabled class="w-full py-2.5 px-3 rounded-xl bg-[#2a374a]/80 border border-slate-600/50 text-[#f87171] font-semibold text-xs flex items-center justify-center gap-1.5 cursor-not-allowed shadow-inner opacity-90">
+                <i data-lucide="slash" class="w-3.5 h-3.5 text-[#f87171]"></i>
+                <span>ไม่พร้อมจำหน่าย</span>
+              </button>
+              <div class="flex items-center justify-center gap-1.5 text-[11px] text-[#f87171] font-medium pt-0.5">
+                <i data-lucide="package" class="w-3.5 h-3.5 text-[#f87171]"></i>
+                <span>คงเหลือ ${p.stock} ชิ้น</span>
+              </div>
+            ` : `
+              <button onclick="handleProductClick('${p.id}', true)" class="w-full brand-btn-primary py-2 px-3 rounded-xl text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-md">
+                <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
+                <span>${hasPopup ? 'ซื้อเลย' : 'สั่งซื้อทันที'}</span>
+              </button>
+              <div class="flex items-center justify-center gap-1 text-[11px] text-muted-foreground/75">
+                <i data-lucide="flame" class="w-3 h-3 text-pink-400"></i>
+                <span>ขายไปแล้ว ${p.sold} ชิ้น</span>
+              </div>
+            `}
           </div>
         </div>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   container.innerHTML = productHTML;
   const homeGrid = document.getElementById('home-featured-grid');
@@ -778,6 +821,55 @@ function renderProducts() {
   }
 
   if (window.lucide) lucide.createIcons();
+}
+
+// PRODUCT INTERACTION HANDLERS (POPUP & DIRECT PURCHASE)
+function handleProductClick(productId, isButtonClick = false) {
+  const p = APP_STATE.products.find(x => x.id === productId);
+  if (!p) return;
+
+  const isMaintenance = (p.status === 'MAINTENANCE' || p.isAvailable === false);
+  if (isMaintenance) {
+    showNotification(`ขออภัย สินค้า "${p.name}" อยู่ในโหมดไม่พร้อมให้บริการชั่วคราว`, 'error');
+    return;
+  }
+
+  const hasPopup = (p.showPopup !== false);
+  if (!hasPopup) {
+    if (isButtonClick) {
+      directPurchaseProduct(p);
+    } else {
+      showNotification(`สินค้านี้ปิดการแสดงป๊อปอัพ (ราคา ฿${p.price})`, 'info');
+    }
+    return;
+  }
+
+  openProductModal(productId);
+}
+
+function directPurchaseProduct(product) {
+  if (!product) return;
+  if (!APP_STATE.currentUser) {
+    showNotification('กรุณาเข้าสู่ระบบก่อนทำการสั่งซื้อสินค้า', 'warning');
+    openAuthModal('login');
+    return;
+  }
+  if (product.stock <= 0) {
+    showNotification('ขออภัย สินค้านี้หมดสต็อกชั่วคราว', 'error');
+    return;
+  }
+  const defaultPlan = (product.plans && product.plans.length > 0) ? product.plans[0] : { name: "ถาวร", price: product.price };
+  if (APP_STATE.currentUser.balance < defaultPlan.price) {
+    showNotification(`ยอดเงินไม่เพียงพอ กรุณาเติมเงินก่อนทำรายการ (ขาด ฿${(defaultPlan.price - APP_STATE.currentUser.balance).toFixed(2)})`, 'warning');
+    switchTab('topup');
+    return;
+  }
+
+  if (confirm(`ยืนยันการสั่งซื้อ "${product.name}" (${defaultPlan.name}) ในราคา ฿${defaultPlan.price} หรือไม่?`)) {
+    activeProduct = product;
+    selectedPlanIndex = 0;
+    confirmPurchase();
+  }
 }
 
 // PRODUCT PURCHASE MODAL
@@ -793,10 +885,52 @@ function openProductModal(productId) {
   const modal = document.getElementById('product-modal');
   if (!modal) return;
 
+  const isMaintenance = (product.status === 'MAINTENANCE' || product.isAvailable === false);
+
   document.getElementById('modal-product-title').innerText = product.name;
   document.getElementById('modal-product-desc').innerText = product.description;
   document.getElementById('modal-product-category').innerText = product.categoryName || product.category;
-  document.getElementById('modal-product-img').src = product.image;
+
+  const modalImg = document.getElementById('modal-product-img');
+  if (modalImg) {
+    modalImg.src = product.image;
+    if (isMaintenance) {
+      modalImg.classList.add('grayscale', 'contrast-125');
+    } else {
+      modalImg.classList.remove('grayscale', 'contrast-125');
+    }
+  }
+
+  const statusBadge = document.getElementById('modal-product-status-badge');
+  if (statusBadge) {
+    if (isMaintenance) {
+      statusBadge.className = 'absolute bottom-2 left-2 px-2.5 py-0.5 rounded-full bg-red-500/20 border border-red-500/40 text-[10px] text-red-300 font-semibold flex items-center gap-1';
+      statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-red-400"></span><span>STATUS: ไม่พร้อมให้บริการ</span>';
+    } else {
+      statusBadge.className = 'absolute bottom-2 left-2 px-2.5 py-0.5 rounded-full bg-brand-primary/20 border border-purple-500/40 text-[10px] text-brand-primary font-semibold flex items-center gap-1';
+      statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span>STATUS: OPERATIONAL</span>';
+    }
+  }
+
+  const alertBanner = document.getElementById('modal-product-maintenance-alert');
+  if (alertBanner) {
+    if (isMaintenance) alertBanner.classList.remove('hidden');
+    else alertBanner.classList.add('hidden');
+  }
+
+  const confirmBtn = document.getElementById('modal-confirm-buy-btn');
+  if (confirmBtn) {
+    if (isMaintenance) {
+      confirmBtn.disabled = true;
+      confirmBtn.className = 'px-6 py-2.5 rounded-xl font-semibold text-xs flex items-center gap-2 bg-slate-800 border border-slate-700 text-red-400 cursor-not-allowed opacity-80';
+      confirmBtn.innerHTML = '<i data-lucide="slash" class="w-4 h-4 text-red-400"></i><span>ไม่พร้อมจำหน่าย</span>';
+    } else {
+      confirmBtn.disabled = false;
+      confirmBtn.className = 'brand-btn-primary px-6 py-2.5 rounded-xl font-semibold text-xs flex items-center gap-2';
+      confirmBtn.innerHTML = '<i data-lucide="shopping-bag" class="w-4 h-4"></i><span>ยืนยันการซื้อสินค้า</span>';
+    }
+  }
+
   document.getElementById('modal-product-stock').innerText = product.stock;
   document.getElementById('modal-product-sold').innerText = product.sold;
   
@@ -854,6 +988,11 @@ function closeProductModal() {
 
 function confirmPurchase() {
   if (!activeProduct) return;
+  if (activeProduct.isAvailable === false || activeProduct.status === 'MAINTENANCE') {
+    showNotification(`ขออภัย สินค้า "${activeProduct.name}" อยู่ในโหมดไม่พร้อมให้บริการชั่วคราว`, 'error');
+    closeProductModal();
+    return;
+  }
   if (!APP_STATE.currentUser) {
     showNotification('กรุณาเข้าสู่ระบบก่อนทำการสั่งซื้อสินค้า', 'warning');
     closeProductModal();
@@ -1435,18 +1574,25 @@ function renderAdminProducts() {
   const table = document.getElementById('admin-products-table');
   if (!table) return;
 
-  table.innerHTML = APP_STATE.products.map(p => `
+  table.innerHTML = APP_STATE.products.map(p => {
+    const isMaintenance = (p.status === 'MAINTENANCE' || p.isAvailable === false);
+    const hasPopup = (p.showPopup !== false);
+
+    return `
     <tr class="border-b border-white/5 hover:bg-white/[0.02]">
       <td class="py-3 px-4">
         <div class="flex items-center gap-3">
-          <img src="${p.image}" class="w-10 h-10 object-cover rounded-lg border border-white/10" alt="" />
+          <img src="${p.image}" class="w-10 h-10 object-cover rounded-lg border border-white/10 ${isMaintenance ? 'grayscale contrast-125' : ''}" alt="" />
           <div>
-            <div class="text-xs font-semibold text-white">${p.name}</div>
+            <div class="text-xs font-semibold text-white flex items-center gap-1.5">
+              <span>${p.name}</span>
+              ${isMaintenance ? `<span class="px-1.5 py-0.5 rounded text-[9px] bg-red-500/20 text-red-400 font-bold border border-red-500/30">ปิดปรับปรุง</span>` : ''}
+            </div>
             <div class="text-[10px] text-brand-primary uppercase font-mono">${p.categoryName || p.category}</div>
           </div>
         </div>
       </td>
-      <td class="py-3 px-4 font-bold text-xs text-white">฿${p.price}</td>
+      <td class="py-3 px-4 font-bold text-xs ${isMaintenance ? 'text-red-400' : 'text-white'}">฿${p.price}</td>
       <td class="py-3 px-4">
         <div class="font-bold text-xs text-white">${p.stock} ชิ้น</div>
         <div class="text-[10px] text-purple-400 font-mono flex items-center gap-1 mt-0.5">
@@ -1455,6 +1601,37 @@ function renderAdminProducts() {
         </div>
       </td>
       <td class="py-3 px-4 text-xs text-gray-300">${p.sold || 0} ชิ้น</td>
+      
+      <!-- สถานะจำหน่าย (Maintenance Mode Quick Toggle) -->
+      <td class="py-3 px-4 text-center">
+        ${isMaintenance ? `
+          <button type="button" onclick="toggleProductAvailability('${p.id}')" class="px-2.5 py-1 rounded-lg bg-red-500/15 border border-red-500/40 text-red-400 hover:bg-red-500/25 text-xs font-semibold inline-flex items-center gap-1 shadow-sm transition-all" title="คลิกเพื่อสลับเป็น พร้อมจำหน่าย">
+            <i data-lucide="alert-octagon" class="w-3.5 h-3.5 text-red-400"></i>
+            <span>ไม่พร้อมจำหน่าย</span>
+          </button>
+        ` : `
+          <button type="button" onclick="toggleProductAvailability('${p.id}')" class="px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/25 text-xs font-semibold inline-flex items-center gap-1 shadow-sm transition-all" title="คลิกเพื่อสลับเป็น ไม่พร้อมให้บริการ">
+            <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-400"></i>
+            <span>พร้อมจำหน่าย</span>
+          </button>
+        `}
+      </td>
+
+      <!-- ป๊อปอัพโชว์สินค้า (Popup Toggle) -->
+      <td class="py-3 px-4 text-center">
+        ${hasPopup ? `
+          <button type="button" onclick="toggleProductPopup('${p.id}')" class="px-2.5 py-1 rounded-lg bg-purple-500/15 border border-purple-500/40 text-purple-300 hover:bg-purple-500/25 text-xs font-semibold inline-flex items-center gap-1 shadow-sm transition-all" title="คลิกเพื่อ ปิดป๊อปอัพ">
+            <i data-lucide="eye" class="w-3.5 h-3.5 text-purple-400"></i>
+            <span>เปิดป๊อปอัพ</span>
+          </button>
+        ` : `
+          <button type="button" onclick="toggleProductPopup('${p.id}')" class="px-2.5 py-1 rounded-lg bg-gray-500/15 border border-gray-500/40 text-gray-400 hover:bg-gray-500/25 text-xs font-semibold inline-flex items-center gap-1 shadow-sm transition-all" title="คลิกเพื่อ เปิดป๊อปอัพ">
+            <i data-lucide="eye-off" class="w-3.5 h-3.5 text-gray-400"></i>
+            <span>ปิดป๊อปอัพ</span>
+          </button>
+        `}
+      </td>
+
       <td class="py-3 px-4 text-right space-x-1 whitespace-nowrap">
         <button onclick="openStockModal('${p.id}')" class="px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/25 text-xs font-semibold inline-flex items-center gap-1 shadow-sm transition-all">
           <i data-lucide="key" class="w-3 h-3"></i>
@@ -1464,9 +1641,64 @@ function renderAdminProducts() {
         <button onclick="deleteProduct('${p.id}')" class="px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 text-xs">ลบ</button>
       </td>
     </tr>
-  `).join('');
+    `;
+  }).join('');
 
   if (window.lucide) lucide.createIcons();
+}
+
+// QUICK TOGGLES FOR MAINTENANCE AND POPUP
+function toggleProductAvailability(productId) {
+  const p = APP_STATE.products.find(x => x.id === productId);
+  if (!p) return;
+  const isCurrentlyMaintenance = (p.status === 'MAINTENANCE' || p.isAvailable === false);
+  if (isCurrentlyMaintenance) {
+    p.status = 'OPERATIONAL';
+    p.isAvailable = true;
+    showNotification(`เปลี่ยนสถานะ "${p.name}" เป็น "พร้อมจำหน่าย" แล้ว`, 'success');
+  } else {
+    p.status = 'MAINTENANCE';
+    p.isAvailable = false;
+    showNotification(`เปลี่ยนสถานะ "${p.name}" เป็น "ไม่พร้อมให้บริการ" แล้ว`, 'warning');
+  }
+  localStorage.setItem('px_products', JSON.stringify(APP_STATE.products));
+  cloudSyncAction('save_products', { products: APP_STATE.products });
+  renderAdminProducts();
+  renderProducts();
+}
+
+function toggleProductPopup(productId) {
+  const p = APP_STATE.products.find(x => x.id === productId);
+  if (!p) return;
+  p.showPopup = (p.showPopup === false) ? true : false;
+  showNotification(`${p.showPopup ? 'เปิด' : 'ปิด'}การแสดงป๊อปอัพของ "${p.name}" เรียบร้อยแล้ว`, 'info');
+  localStorage.setItem('px_products', JSON.stringify(APP_STATE.products));
+  cloudSyncAction('save_products', { products: APP_STATE.products });
+  renderAdminProducts();
+  renderProducts();
+}
+
+function toggleAllProductsPopup(enable) {
+  APP_STATE.products.forEach(p => {
+    p.showPopup = enable;
+  });
+  localStorage.setItem('px_products', JSON.stringify(APP_STATE.products));
+  cloudSyncAction('save_products', { products: APP_STATE.products });
+  renderAdminProducts();
+  renderProducts();
+  showNotification(`${enable ? 'เปิด' : 'ปิด'}การแสดงป๊อปอัพสินค้าทุกรายการแล้ว!`, 'success');
+}
+
+function toggleAllProductsAvailability(available) {
+  APP_STATE.products.forEach(p => {
+    p.isAvailable = available;
+    p.status = available ? 'OPERATIONAL' : 'MAINTENANCE';
+  });
+  localStorage.setItem('px_products', JSON.stringify(APP_STATE.products));
+  cloudSyncAction('save_products', { products: APP_STATE.products });
+  renderAdminProducts();
+  renderProducts();
+  showNotification(`${available ? 'เปิดพร้อมจำหน่าย' : 'เปิดโหมดไม่พร้อมให้บริการ'}สินค้าทุกรายการแล้ว!`, available ? 'success' : 'warning');
 }
 
 // Add/Edit Product Modal
@@ -1491,6 +1723,12 @@ function openProductAdminModal(isNew = true) {
     document.getElementById('admin-prod-preview').src = 'assets/products/nexus.webp';
     document.getElementById('admin-prod-desc').value = '';
     document.getElementById('admin-prod-hot').checked = false;
+    
+    const maintCheck = document.getElementById('admin-prod-maintenance');
+    if (maintCheck) maintCheck.checked = false;
+    const popupCheck = document.getElementById('admin-prod-popup');
+    if (popupCheck) popupCheck.checked = true;
+
     document.getElementById('admin-prod-download-url').value = '';
     document.getElementById('admin-prod-guide-url').value = '';
     document.getElementById('admin-prod-keys-input').value = '';
@@ -1535,6 +1773,11 @@ function editProduct(id) {
   document.getElementById('admin-prod-preview').src = p.image;
   document.getElementById('admin-prod-desc').value = p.description;
   document.getElementById('admin-prod-hot').checked = !!p.isHot;
+
+  const maintCheck = document.getElementById('admin-prod-maintenance');
+  if (maintCheck) maintCheck.checked = (p.status === 'MAINTENANCE' || p.isAvailable === false);
+  const popupCheck = document.getElementById('admin-prod-popup');
+  if (popupCheck) popupCheck.checked = (p.showPopup !== false);
 
   document.getElementById('admin-prod-download-url').value = p.downloadUrl || '';
   document.getElementById('admin-prod-guide-url').value = p.guideUrl || '';
@@ -1602,6 +1845,9 @@ function saveProductFromAdmin(e) {
   const desc = document.getElementById('admin-prod-desc').value.trim();
   const isHot = document.getElementById('admin-prod-hot').checked;
 
+  const isMaintenance = document.getElementById('admin-prod-maintenance')?.checked || false;
+  const showPopup = document.getElementById('admin-prod-popup') ? document.getElementById('admin-prod-popup').checked : true;
+
   const downloadUrl = document.getElementById('admin-prod-download-url').value.trim();
   const guideUrl = document.getElementById('admin-prod-guide-url').value.trim();
   const rawKeys = document.getElementById('admin-prod-keys-input').value;
@@ -1641,6 +1887,9 @@ function saveProductFromAdmin(e) {
       APP_STATE.products[idx].description = desc;
       APP_STATE.products[idx].isHot = isHot;
       APP_STATE.products[idx].badge = isHot ? "ยอดฮิต" : "";
+      APP_STATE.products[idx].status = isMaintenance ? 'MAINTENANCE' : 'OPERATIONAL';
+      APP_STATE.products[idx].isAvailable = !isMaintenance;
+      APP_STATE.products[idx].showPopup = showPopup;
       APP_STATE.products[idx].plans = plans;
       APP_STATE.products[idx].downloadUrl = downloadUrl;
       APP_STATE.products[idx].guideUrl = guideUrl;
@@ -1661,7 +1910,9 @@ function saveProductFromAdmin(e) {
       description: desc,
       isHot,
       badge: isHot ? "ยอดฮิต" : "",
-      status: "OPERATIONAL",
+      status: isMaintenance ? "MAINTENANCE" : "OPERATIONAL",
+      isAvailable: !isMaintenance,
+      showPopup: showPopup,
       downloadUrl,
       guideUrl,
       keys,

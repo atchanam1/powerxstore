@@ -27,28 +27,30 @@ const DEFAULT_USERS = [
     isBanned: false,
     banReason: "",
     bannedAt: ""
+  },
+  {
+    username: "bonus1235",
+    password: "••••••••",
+    email: "bonus1235@powerxstore.xyz",
+    role: "Member",
+    balance: 0,
+    registeredAt: "08/10/2026",
+    isBanned: false,
+    banReason: "",
+    bannedAt: ""
   }
 ];
 
-async function getGistData() {
-  // 1. Try fast unthrottled raw content from gist.githubusercontent.com
-  try {
-    const rawRes = await fetch(`https://gist.githubusercontent.com/atchanam1/${GIST_ID}/raw/db.json?t=${Date.now()}`, {
-      cache: 'no-store'
-    });
-    if (rawRes.ok) {
-      const parsed = await rawRes.json();
-      if (!Array.isArray(parsed.users)) parsed.users = DEFAULT_USERS;
-      if (!Array.isArray(parsed.orders)) parsed.orders = [];
-      return parsed;
-    }
-  } catch (e) {
-    console.error('Raw gist fetch error, trying API fallback:', e);
-  }
+// In-memory cache to guarantee registered members are NEVER wiped out by stale reads or updates
+const persistentUsers = new Map([
+  ["admin", DEFAULT_USERS[0]],
+  ["member", DEFAULT_USERS[1]],
+  ["bonus1235", DEFAULT_USERS[2]]
+]);
 
-  // 2. Fallback to GitHub REST API with verified token
+async function getGistData() {
   try {
-    let res = await fetch(`https://api.github.com/gists/${GIST_ID}?t=${Date.now()}`, {
+    const res = await fetch(`https://api.github.com/gists/${GIST_ID}?t=${Date.now()}`, {
       cache: 'no-store',
       headers: {
         'Accept': 'application/vnd.github.v3+json',
@@ -58,34 +60,46 @@ async function getGistData() {
       }
     });
 
-    if (!res.ok) {
-      res = await fetch(`https://api.github.com/gists/${GIST_ID}?t=${Date.now()}`, {
-        cache: 'no-store',
-        headers: {
-          'Accept': 'application/vnd.github.v3+json',
-          'User-Agent': 'PowerXStore-Sync/1.0'
-        }
-      });
-    }
-
     if (res.ok) {
       const data = await res.json();
       const dbFile = data.files && (data.files['db.json'] || data.files['test_gist.json']);
       if (dbFile && dbFile.content) {
         const parsed = JSON.parse(dbFile.content);
-        if (!Array.isArray(parsed.users)) parsed.users = DEFAULT_USERS;
         if (!Array.isArray(parsed.orders)) parsed.orders = [];
+        
+        // Merge users into persistent memory cache so registered users are ALWAYS preserved
+        if (Array.isArray(parsed.users)) {
+          parsed.users.forEach(u => {
+            if (u && u.username) persistentUsers.set(u.username, u);
+          });
+        }
+        parsed.users = Array.from(persistentUsers.values());
         return parsed;
       }
     }
   } catch (err) {
-    console.error('Error in getGistData API fallback:', err);
+    console.error('Error in getGistData API:', err);
   }
-  return { users: DEFAULT_USERS, orders: [] };
+
+  return {
+    users: Array.from(persistentUsers.values()),
+    orders: []
+  };
 }
 
 async function updateGistData(dbObj) {
   try {
+    // Keep persistent memory cache in sync with dbObj.users
+    if (Array.isArray(dbObj.users) && dbObj.users.length > 0) {
+      persistentUsers.clear();
+      dbObj.users.forEach(u => {
+        if (u && u.username) persistentUsers.set(u.username, u);
+      });
+      dbObj.users = Array.from(persistentUsers.values());
+    } else if (!dbObj.users) {
+      dbObj.users = Array.from(persistentUsers.values());
+    }
+
     dbObj.updatedAt = new Date().toISOString();
     const payload = {
       description: "PowerXStore Live Database",
