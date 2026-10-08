@@ -186,15 +186,21 @@ const DEFAULT_USERS = [
     email: "admin@powerxstore.xyz",
     role: "Admin",
     balance: 99999,
-    registeredAt: "01/10/2026"
+    registeredAt: "01/10/2026",
+    isBanned: false,
+    banReason: "",
+    bannedAt: ""
   },
   {
     username: "member",
     password: "1234",
     email: "member@powerxstore.xyz",
     role: "Member",
-    balance: 350,
-    registeredAt: "08/10/2026"
+    balance: 0,
+    registeredAt: "08/10/2026",
+    isBanned: false,
+    banReason: "",
+    bannedAt: ""
   }
 ];
 
@@ -378,6 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderHistory();
   updateAuthUI();
   startRecentPurchaseToasts();
+  initCloudSync();
 
   // Security Watchdogs & Defenses
   verifyBalanceIntegrity();
@@ -1015,6 +1022,12 @@ function handleLogin(e) {
     return;
   }
 
+  // Check if account is banned
+  if (user.isBanned) {
+    showBanAlertModal(user.username, user.banReason, user.bannedAt);
+    return;
+  }
+
   APP_STATE.currentUser = user;
   localStorage.setItem('px_currentUser', JSON.stringify(user));
   updateAuthUI();
@@ -1044,13 +1057,19 @@ function handleRegister(e) {
     return;
   }
 
+  const now = new Date();
+  const dateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+
   const newUser = {
     username,
     password,
     email: email || `${username}@powerxstore.xyz`,
     role: "Member",
-    balance: 50, // Welcome starter bonus ฿50
-    registeredAt: new Date().toLocaleDateString('th-TH')
+    balance: 0,
+    registeredAt: dateStr,
+    isBanned: false,
+    banReason: "",
+    bannedAt: ""
   };
 
   APP_STATE.users.push(newUser);
@@ -1061,7 +1080,10 @@ function handleRegister(e) {
 
   updateAuthUI();
   closeAuthModal();
-  showNotification(`สมัครสมาชิกสำเร็จ! รับโบนัสสมาชิกใหม่ ฿50.00`, 'success');
+  showNotification(`สมัครสมาชิกสำเร็จ! ยินดีต้อนรับคุณ ${newUser.username}`, 'success');
+
+  // Immediately push new user to Cloud Database
+  cloudSyncAction('register', newUser);
 }
 
 function logoutUser() {
@@ -1323,7 +1345,7 @@ function switchAdminTab(tabName) {
   if (btn) btn.classList.add('active');
 
   if (tabName === 'products') renderAdminProducts();
-  if (tabName === 'users') renderAdminUsers();
+  if (tabName === 'users') { renderAdminUsers(); refreshUsersFromCloud(false); }
   if (tabName === 'orders') renderAdminOrders();
   if (tabName === 'settings') populateAdminSettingsForm();
   if (tabName === 'topup') populateAdminTopupForm();
@@ -1920,12 +1942,18 @@ function renderAdminUsers() {
   if (!table) return;
 
   table.innerHTML = APP_STATE.users.map(u => `
-    <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+    <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors ${u.isBanned ? 'bg-red-500/[0.04]' : ''}">
       <td class="py-3 px-4">
-        <div class="font-bold text-xs text-white flex items-center gap-1.5">
+        <div class="font-bold text-xs text-white flex items-center gap-1.5 flex-wrap">
           <span>${u.username}</span>
           ${APP_STATE.currentUser && APP_STATE.currentUser.username === u.username ? `
             <span class="text-[9px] bg-brand-primary/20 border border-brand-primary/40 text-brand-accent px-1.5 py-0.5 rounded font-mono">คุณ</span>
+          ` : ''}
+          ${u.isBanned ? `
+            <span class="text-[9px] bg-red-500/20 border border-red-500/40 text-red-400 px-1.5 py-0.5 rounded font-bold inline-flex items-center gap-1">
+              <i data-lucide="ban" class="w-2.5 h-2.5"></i>
+              <span>ถูกแบน</span>
+            </span>
           ` : ''}
         </div>
         <div class="text-[10px] text-gray-400 font-mono">${u.email || '-'}</div>
@@ -1939,23 +1967,46 @@ function renderAdminUsers() {
         </div>
       </td>
       <td class="py-3 px-4">
-        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${u.role === 'Admin' ? 'bg-brand-primary text-white shadow-sm shadow-purple-500/30' : 'bg-white/10 text-gray-300'}">
-          ${u.role}
-        </span>
+        <div class="space-y-0.5">
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${u.role === 'Admin' ? 'bg-brand-primary text-white shadow-sm shadow-purple-500/30' : (u.isBanned ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-white/10 text-gray-300')}">
+            ${u.isBanned ? 'ระงับการใช้งาน' : u.role}
+          </span>
+          ${u.isBanned ? `
+            <div class="text-[10px] text-red-400 font-medium max-w-[160px] truncate" title="${u.banReason}">
+              เหตุผล: ${u.banReason || 'ละเมิดกฎร้าน'}
+            </div>
+          ` : ''}
+        </div>
       </td>
-      <td class="py-3 px-4 text-xs font-bold text-brand-primary font-mono">฿${Number(u.balance).toFixed(2)}</td>
-      <td class="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
+      <td class="py-3 px-4 text-xs font-bold font-mono ${u.balance > 0 ? 'text-brand-primary' : 'text-gray-400'}">
+        ฿${Number(u.balance).toFixed(2)}
+      </td>
+      <td class="py-3 px-4 text-right space-x-1 whitespace-nowrap">
         <button onclick="openUserDetailsModal('${u.username}')" class="px-2.5 py-1 rounded-lg bg-brand-primary/20 border border-brand-primary/40 text-brand-primary hover:bg-brand-primary/30 text-xs font-semibold inline-flex items-center gap-1 transition-all">
           <i data-lucide="eye" class="w-3 h-3"></i>
-          <span>ดูประวัติ & จัดการ</span>
+          <span>ดูประวัติ</span>
         </button>
-        <button onclick="promptAdjustBalance('${u.username}')" class="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 text-xs transition-colors">
+        <button onclick="openBalanceModal('${u.username}')" class="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:bg-white/10 text-xs transition-colors" title="ปรับยอดเงิน / กำหนดเงิน">
           ปรับเงิน
         </button>
+        <button onclick="resetUserBalanceToZero('${u.username}')" class="px-2 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 text-xs font-semibold transition-colors" title="ตั้งยอดเงินเป็น ฿0 ทันที">
+          รีเซ็ต ฿0
+        </button>
         ${u.username !== 'admin' ? `
-          <button onclick="toggleUserRole('${u.username}')" class="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-gray-400 hover:text-yellow-400 hover:bg-white/10 text-xs transition-colors">
-            เปลี่ยนสิทธิ์
+          <button onclick="toggleUserRole('${u.username}')" class="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-gray-400 hover:text-yellow-400 hover:bg-white/10 text-xs transition-colors" title="เปลี่ยนสถานะ Admin/Member">
+            สิทธิ์
           </button>
+          ${u.isBanned ? `
+            <button onclick="unbanUser('${u.username}')" class="px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30 text-xs font-semibold inline-flex items-center gap-1 transition-all">
+              <i data-lucide="check-circle" class="w-3 h-3"></i>
+              <span>ปลดแบน</span>
+            </button>
+          ` : `
+            <button onclick="openBanModal('${u.username}')" class="px-2.5 py-1 rounded-lg bg-red-600/20 border border-red-500/40 text-red-400 hover:bg-red-600 hover:text-white text-xs font-semibold inline-flex items-center gap-1 transition-all">
+              <i data-lucide="ban" class="w-3 h-3"></i>
+              <span>แบน</span>
+            </button>
+          `}
         ` : ''}
       </td>
     </tr>
@@ -1994,6 +2045,34 @@ function openUserDetailsModal(username) {
 
   const regEl = document.getElementById('ud-modal-registered');
   if (regEl) regEl.textContent = `สมัครเมื่อ: ${user.registeredAt || '08/10/2026'}`;
+
+  // Ban container action in modal footer
+  const banContainer = document.getElementById('ud-modal-ban-action-container');
+  if (banContainer) {
+    if (user.username === 'admin') {
+      banContainer.innerHTML = '';
+    } else if (user.isBanned) {
+      banContainer.innerHTML = `
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-red-400 font-semibold flex items-center gap-1">
+            <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
+            <span>ถูกแบน: ${user.banReason || 'ละเมิดกฎ'}</span>
+          </span>
+          <button onclick="unbanUser('${user.username}'); closeUserDetailsModal();" class="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-semibold flex items-center gap-1.5 transition-all">
+            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+            <span>ปลดแบนผู้ใช้นี้</span>
+          </button>
+        </div>
+      `;
+    } else {
+      banContainer.innerHTML = `
+        <button onclick="closeUserDetailsModal(); openBanModal('${user.username}');" class="px-3 py-1.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/40 text-xs font-semibold flex items-center gap-1.5 transition-all">
+          <i data-lucide="ban" class="w-3.5 h-3.5"></i>
+          <span>ระงับการใช้งานบัญชี (แบน)</span>
+        </button>
+      `;
+    }
+  }
 
   // Filter Purchases
   const userOrders = APP_STATE.purchases.filter(o => o.username === username);
@@ -2140,55 +2219,236 @@ function saveUserPasswordFromModal() {
   }
 }
 
-function promptAdjustBalanceFromModal() {
-  if (!activeDetailUsername) return;
-  const amount = prompt(`ระบุจำนวนเงินที่ต้องการเพิ่ม (+) หรือลด (-) ให้แก่ผู้ใช้ ${activeDetailUsername} (บาท):`, "100");
-  if (amount === null) return;
-  const num = parseFloat(amount);
-  if (isNaN(num)) {
-    showNotification('กรุณากรอกตัวเลขจำนวนเงินที่ถูกต้อง', 'error');
+// ==========================================
+// BALANCE ADJUSTMENT & 0 RESET SYSTEM
+// ==========================================
+
+let activeBalanceUsername = null;
+
+function openBalanceModal(username) {
+  const user = APP_STATE.users.find(u => u.username === username);
+  if (!user) {
+    showNotification('ไม่พบผู้ใช้นี้ในระบบ', 'error');
     return;
   }
 
-  const user = APP_STATE.users.find(u => u.username === activeDetailUsername);
-  if (user) {
-    user.balance = Math.max(0, user.balance + num);
-    localStorage.setItem('px_users', JSON.stringify(APP_STATE.users));
+  activeBalanceUsername = username;
+  document.getElementById('admin-bal-modal-username').textContent = user.username;
+  document.getElementById('admin-bal-modal-current').textContent = `฿${Number(user.balance).toFixed(2)}`;
 
-    if (APP_STATE.currentUser && APP_STATE.currentUser.username === activeDetailUsername) {
-      APP_STATE.currentUser.balance = user.balance;
-      localStorage.setItem('px_currentUser', JSON.stringify(APP_STATE.currentUser));
-      updateAuthUI();
-    }
+  const input = document.getElementById('admin-bal-modal-set-input');
+  if (input) input.value = user.balance;
 
-    const balEl = document.getElementById('ud-modal-balance');
-    if (balEl) balEl.textContent = `฿${user.balance.toFixed(2)}`;
+  const modal = document.getElementById('admin-balance-modal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+  if (window.lucide) lucide.createIcons();
+}
 
-    renderAdminUsers();
-    showNotification(`ปรับยอดเงินของ ${activeDetailUsername} สำเร็จ เป็น ฿${user.balance.toFixed(2)}`, 'success');
+function closeBalanceModal() {
+  const modal = document.getElementById('admin-balance-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
   }
 }
 
-function promptAdjustBalance(username) {
-  const amount = prompt(`ระบุจำนวนเงินที่ต้องการเพิ่ม (+) หรือลด (-) ให้แก่ผู้ใช้ ${username} (บาท):`, "100");
-  if (amount === null) return;
-  const num = parseFloat(amount);
-  if (isNaN(num)) {
-    showNotification('กรุณากรอกตัวเลขจำนวนเงินที่ถูกต้อง', 'error');
+function quickApplyBalanceDelta(delta) {
+  if (!activeBalanceUsername) return;
+  const user = APP_STATE.users.find(u => u.username === activeBalanceUsername);
+  if (!user) return;
+  const current = parseFloat(document.getElementById('admin-bal-modal-set-input').value) || user.balance || 0;
+  const next = Math.max(0, current + delta);
+  document.getElementById('admin-bal-modal-set-input').value = next;
+}
+
+function confirmResetBalanceToZero() {
+  if (!activeBalanceUsername) return;
+  const user = APP_STATE.users.find(u => u.username === activeBalanceUsername);
+  if (!user) return;
+
+  user.balance = 0;
+  localStorage.setItem('px_users', JSON.stringify(APP_STATE.users));
+
+  if (APP_STATE.currentUser && APP_STATE.currentUser.username === activeBalanceUsername) {
+    APP_STATE.currentUser.balance = 0;
+    localStorage.setItem('px_currentUser', JSON.stringify(APP_STATE.currentUser));
+    updateAuthUI();
+  }
+
+  const udBal = document.getElementById('ud-modal-balance');
+  if (udBal) udBal.textContent = '฿0.00';
+
+  cloudSyncAction('reset_balance_zero', { username: activeBalanceUsername });
+  renderAdminUsers();
+  closeBalanceModal();
+  showNotification(`รีเซ็ตยอดเงินของ ${activeBalanceUsername} เป็น ฿0 เรียบร้อยแล้ว!`, 'success');
+}
+
+function resetUserBalanceToZero(username) {
+  if (!confirm(`คุณต้องการรีเซ็ตยอดเงินของผู้ใช้ "${username}" ให้กลายเป็น ฿0 ใช่หรือไม่?`)) return;
+  const user = APP_STATE.users.find(u => u.username === username);
+  if (!user) return;
+
+  user.balance = 0;
+  localStorage.setItem('px_users', JSON.stringify(APP_STATE.users));
+
+  if (APP_STATE.currentUser && APP_STATE.currentUser.username === username) {
+    APP_STATE.currentUser.balance = 0;
+    localStorage.setItem('px_currentUser', JSON.stringify(APP_STATE.currentUser));
+    updateAuthUI();
+  }
+
+  const udBal = document.getElementById('ud-modal-balance');
+  if (udBal && activeDetailUsername === username) udBal.textContent = '฿0.00';
+
+  cloudSyncAction('reset_balance_zero', { username });
+  renderAdminUsers();
+  showNotification(`รีเซ็ตยอดเงินของ ${username} เป็น ฿0 เรียบร้อยแล้ว!`, 'success');
+}
+
+function confirmSetBalanceExact() {
+  if (!activeBalanceUsername) return;
+  const val = parseFloat(document.getElementById('admin-bal-modal-set-input').value);
+  if (isNaN(val) || val < 0) {
+    showNotification('กรุณากรอกตัวเลขยอดเงินที่ถูกต้อง (ตั้งแต่ 0 ขึ้นไป)', 'error');
     return;
   }
 
+  const user = APP_STATE.users.find(u => u.username === activeBalanceUsername);
+  if (!user) return;
+
+  user.balance = val;
+  localStorage.setItem('px_users', JSON.stringify(APP_STATE.users));
+
+  if (APP_STATE.currentUser && APP_STATE.currentUser.username === activeBalanceUsername) {
+    APP_STATE.currentUser.balance = user.balance;
+    localStorage.setItem('px_currentUser', JSON.stringify(APP_STATE.currentUser));
+    updateAuthUI();
+  }
+
+  const udBal = document.getElementById('ud-modal-balance');
+  if (udBal && activeDetailUsername === activeBalanceUsername) udBal.textContent = `฿${user.balance.toFixed(2)}`;
+
+  cloudSyncAction('adjust_balance', { username: activeBalanceUsername, balance: val });
+  renderAdminUsers();
+  closeBalanceModal();
+  showNotification(`กำหนดยอดเงินของ ${activeBalanceUsername} เป็น ฿${user.balance.toFixed(2)} สำเร็จ!`, 'success');
+}
+
+function promptAdjustBalance(username) {
+  openBalanceModal(username);
+}
+
+function promptAdjustBalanceFromModal() {
+  if (activeDetailUsername) openBalanceModal(activeDetailUsername);
+}
+
+// ==========================================
+// BAN MEMBER SYSTEM WITH REASON
+// ==========================================
+
+let activeBanUsername = null;
+
+function openBanModal(username) {
+  if (username === 'admin') {
+    showNotification('ไม่สามารถแบนบัญชีแอดมินหลักได้', 'warning');
+    return;
+  }
+
+  activeBanUsername = username;
+  document.getElementById('admin-ban-modal-username').textContent = username;
+  document.getElementById('admin-ban-reason-input').value = '';
+
+  const modal = document.getElementById('admin-ban-modal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+  if (window.lucide) lucide.createIcons();
+}
+
+function closeBanModal() {
+  const modal = document.getElementById('admin-ban-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+}
+
+function setBanPresetReason(reason) {
+  const input = document.getElementById('admin-ban-reason-input');
+  if (input) input.value = reason;
+}
+
+function confirmBanUser() {
+  if (!activeBanUsername) return;
+  const user = APP_STATE.users.find(u => u.username === activeBanUsername);
+  if (!user) return;
+
+  const rawReason = document.getElementById('admin-ban-reason-input').value.trim();
+  const reason = rawReason || 'ละเมิดข้อกำหนดและนโยบายของร้าน POWERXSTORE';
+
+  user.isBanned = true;
+  user.banReason = reason;
+  user.bannedAt = new Date().toLocaleString('th-TH');
+
+  localStorage.setItem('px_users', JSON.stringify(APP_STATE.users));
+
+  // If the banned user is currently logged in, kick them out
+  if (APP_STATE.currentUser && APP_STATE.currentUser.username === activeBanUsername) {
+    APP_STATE.currentUser = null;
+    localStorage.removeItem('px_currentUser');
+    updateAuthUI();
+  }
+
+  cloudSyncAction('ban_user', { username: activeBanUsername, reason });
+  renderAdminUsers();
+  closeBanModal();
+  closeUserDetailsModal();
+  showNotification(`🚫 แบนผู้ใช้ ${activeBanUsername} เรียบร้อยแล้ว (เหตุผล: ${reason})`, 'error');
+}
+
+function unbanUser(username) {
+  if (!confirm(`คุณต้องการปลดแบนผู้ใช้ "${username}" ให้กลับมาใช้งานได้ตามปกติใช่หรือไม่?`)) return;
   const user = APP_STATE.users.find(u => u.username === username);
-  if (user) {
-    user.balance = Math.max(0, user.balance + num);
-    localStorage.setItem('px_users', JSON.stringify(APP_STATE.users));
-    if (APP_STATE.currentUser && APP_STATE.currentUser.username === username) {
-      APP_STATE.currentUser.balance = user.balance;
-      localStorage.setItem('px_currentUser', JSON.stringify(APP_STATE.currentUser));
-      updateAuthUI();
-    }
-    renderAdminUsers();
-    showNotification(`ปรับยอดเงินของ ${username} สำเร็จ เป็น ฿${user.balance.toFixed(2)}`, 'success');
+  if (!user) return;
+
+  user.isBanned = false;
+  user.banReason = '';
+  user.bannedAt = '';
+
+  localStorage.setItem('px_users', JSON.stringify(APP_STATE.users));
+  cloudSyncAction('unban_user', { username });
+  renderAdminUsers();
+  showNotification(`✅ ปลดแบนผู้ใช้ ${username} เรียบร้อยแล้ว`, 'success');
+}
+
+function showBanAlertModal(username, reason, time) {
+  const uEl = document.getElementById('banned-alert-username');
+  if (uEl) uEl.textContent = username;
+
+  const rEl = document.getElementById('banned-alert-reason');
+  if (rEl) rEl.textContent = reason || 'ละเมิดข้อกำหนดการใช้งาน';
+
+  const tEl = document.getElementById('banned-alert-time');
+  if (tEl) tEl.textContent = time || new Date().toLocaleString('th-TH');
+
+  const modal = document.getElementById('user-banned-alert-modal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+  if (window.lucide) lucide.createIcons();
+}
+
+function closeBanAlertModal() {
+  const modal = document.getElementById('user-banned-alert-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
   }
 }
 
@@ -2197,6 +2457,7 @@ function toggleUserRole(username) {
   if (user) {
     user.role = user.role === 'Admin' ? 'Member' : 'Admin';
     localStorage.setItem('px_users', JSON.stringify(APP_STATE.users));
+    cloudSyncAction('change_role', { username, role: user.role });
     renderAdminUsers();
     showNotification(`เปลี่ยนสิทธิ์ของ ${username} เป็น ${user.role} เรียบร้อยแล้ว`, 'info');
   }
@@ -2875,5 +3136,144 @@ function simulateBalanceTamper() {
   setTimeout(() => {
     verifyBalanceIntegrity();
   }, 1200);
+}
+
+// ==========================================
+// REAL-TIME CLOUD DATABASE & SYNC ENGINE
+// ==========================================
+
+const CLOUD_SYNC_ENDPOINT = '/api/sync';
+const GIST_FALLBACK_RAW = 'https://gist.githubusercontent.com/atchanam1/e67e5914f8a2ca2576a2307b2a75c292/raw/db.json';
+
+let isCloudSyncing = false;
+
+async function initCloudSync() {
+  await refreshUsersFromCloud(false);
+  // Auto-sync in background every 12 seconds
+  setInterval(() => {
+    refreshUsersFromCloud(false);
+  }, 12000);
+}
+
+async function refreshUsersFromCloud(showNotice = false) {
+  if (isCloudSyncing) return;
+  isCloudSyncing = true;
+  const badge = document.getElementById('cloud-sync-status-badge');
+
+  try {
+    let cloudUsers = null;
+    let cloudOrders = null;
+
+    // 1. Try Vercel Serverless Function endpoint
+    try {
+      const res = await fetch(CLOUD_SYNC_ENDPOINT, { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && Array.isArray(data.users)) {
+          cloudUsers = data.users;
+          cloudOrders = data.orders;
+        }
+      }
+    } catch (e) {
+      // Endpoint error or local dev
+    }
+
+    // 2. Gist fallback if serverless endpoint is not responding
+    if (!cloudUsers) {
+      try {
+        const res2 = await fetch(GIST_FALLBACK_RAW + '?t=' + Date.now());
+        if (res2.ok) {
+          const data2 = await res2.json();
+          if (data2 && Array.isArray(data2.users)) {
+            cloudUsers = data2.users;
+            cloudOrders = data2.orders;
+          }
+        }
+      } catch (e2) {}
+    }
+
+    if (cloudUsers && cloudUsers.length > 0) {
+      if (badge) {
+        badge.textContent = 'ONLINE';
+        badge.className = 'px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 font-mono';
+      }
+
+      // Merge Cloud users into local state
+      const userMap = new Map();
+      APP_STATE.users.forEach(u => userMap.set(u.username, u));
+      cloudUsers.forEach(cu => {
+        userMap.set(cu.username, cu);
+      });
+      APP_STATE.users = Array.from(userMap.values());
+      localStorage.setItem('px_users', JSON.stringify(APP_STATE.users));
+
+      // Check current user status (banned or balance updated)
+      if (APP_STATE.currentUser) {
+        const myCloudProfile = APP_STATE.users.find(u => u.username === APP_STATE.currentUser.username);
+        if (myCloudProfile) {
+          if (myCloudProfile.isBanned) {
+            APP_STATE.currentUser = null;
+            localStorage.removeItem('px_currentUser');
+            updateAuthUI();
+            showBanAlertModal(myCloudProfile.username, myCloudProfile.banReason, myCloudProfile.bannedAt);
+            isCloudSyncing = false;
+            return;
+          }
+          APP_STATE.currentUser.balance = myCloudProfile.balance;
+          APP_STATE.currentUser.role = myCloudProfile.role;
+          localStorage.setItem('px_currentUser', JSON.stringify(APP_STATE.currentUser));
+          updateAuthUI();
+        }
+      }
+
+      // Update admin user table if admin panel is open
+      const usersPanel = document.getElementById('admin-panel-users');
+      if (usersPanel && !usersPanel.classList.contains('hidden')) {
+        renderAdminUsers();
+      }
+
+      if (showNotice) {
+        showNotification(`ดึงข้อมูลสมาชิกล่าสุดจากคลาวด์สำเร็จ! (${APP_STATE.users.length} คน)`, 'success');
+      }
+    } else {
+      if (badge) {
+        badge.textContent = 'LOCAL';
+        badge.className = 'px-2 py-0.5 rounded-full text-[10px] bg-yellow-500/15 border border-yellow-500/40 text-yellow-300 font-mono';
+      }
+      if (showNotice) {
+        showNotification('เชื่อมต่อคลาวด์สำเร็จ (ใช้ฐานข้อมูลในเครื่อง)', 'info');
+      }
+    }
+  } catch (err) {
+    console.warn('Cloud sync error:', err);
+    if (badge) {
+      badge.textContent = 'OFFLINE';
+      badge.className = 'px-2 py-0.5 rounded-full text-[10px] bg-red-500/15 border border-red-500/40 text-red-300 font-mono';
+    }
+  } finally {
+    isCloudSyncing = false;
+  }
+}
+
+async function cloudSyncAction(action, payload) {
+  try {
+    const res = await fetch(CLOUD_SYNC_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, payload })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && Array.isArray(data.users)) {
+        APP_STATE.users = data.users;
+        localStorage.setItem('px_users', JSON.stringify(APP_STATE.users));
+        renderAdminUsers();
+      }
+      return data;
+    }
+  } catch (err) {
+    console.warn('cloudSyncAction fetch error:', err);
+  }
+  return null;
 }
 
