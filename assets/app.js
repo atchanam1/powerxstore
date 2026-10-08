@@ -163,8 +163,11 @@ const DEFAULT_STORE_CONFIG = {
   stats: {
     users: 4913,
     products: 4,
-    stock: 198,
-    sold: 367
+    stock: 21,
+    sold: 938,
+    usersMode: "fixed",
+    productsMode: "auto",
+    stockMode: "auto"
   }
 };
 
@@ -342,6 +345,21 @@ if (localStorage.getItem('px_asset_v') !== '20261009_v3') {
   });
   localStorage.setItem('px_products', JSON.stringify(APP_STATE.products));
   localStorage.setItem('px_asset_v', '20261009_v3');
+}
+
+// Auto-migrate browser cache to 21 stock, 938 sold, and customizable stat modes
+if (localStorage.getItem('px_stats_v') !== '20261009_v4' || !APP_STATE.storeConfig.stats || APP_STATE.storeConfig.stats.sold === 367) {
+  APP_STATE.storeConfig.stats = {
+    users: 4913,
+    products: 4,
+    stock: 21,
+    sold: 938,
+    usersMode: "fixed",
+    productsMode: "auto",
+    stockMode: "auto"
+  };
+  localStorage.setItem('px_store_config', JSON.stringify(APP_STATE.storeConfig));
+  localStorage.setItem('px_stats_v', '20261009_v4');
 }
 
 // Initialize orders if empty
@@ -523,23 +541,42 @@ function applyStoreConfig() {
   const elBannerSubtitle = document.getElementById('promo-banner-subtitle');
   if (elBannerSubtitle && c.bannerSubtitle) elBannerSubtitle.innerText = c.bannerSubtitle;
 
-  // Live Stats
-  const elStatUsers = document.getElementById('stat-counter-users');
-  if (elStatUsers) elStatUsers.innerText = Number(c.stats.users).toLocaleString();
+  // Live Stats Counters
+  if (c.stats) {
+    const elStatUsers = document.getElementById('stat-counter-users');
+    if (elStatUsers) {
+      let usersCount = Number(c.stats.users || 4913);
+      if (c.stats.usersMode === 'real_plus_base') {
+        const realRegistered = Math.max(0, (APP_STATE.users || []).length - 2);
+        usersCount += realRegistered;
+      }
+      elStatUsers.innerText = Number(usersCount).toLocaleString();
+    }
 
-  const elStatProducts = document.getElementById('stat-counter-products');
-  if (elStatProducts) elStatProducts.innerText = APP_STATE.products.length;
+    const elStatProducts = document.getElementById('stat-counter-products');
+    if (elStatProducts) {
+      if (c.stats.productsMode === 'custom' && typeof c.stats.products === 'number') {
+        elStatProducts.innerText = Number(c.stats.products).toLocaleString();
+      } else {
+        elStatProducts.innerText = APP_STATE.products.length;
+      }
+    }
 
-  const elStatStock = document.getElementById('stat-counter-stock');
-  if (elStatStock) {
-    const totalStock = APP_STATE.products.reduce((acc, p) => acc + (p.stock || 0), 0);
-    elStatStock.innerText = totalStock || c.stats.stock;
-  }
+    const elStatStock = document.getElementById('stat-counter-stock');
+    if (elStatStock) {
+      if (c.stats.stockMode === 'custom' && typeof c.stats.stock === 'number') {
+        elStatStock.innerText = Number(c.stats.stock).toLocaleString();
+      } else {
+        const totalStock = APP_STATE.products.reduce((acc, p) => acc + (p.stock || (p.keys ? p.keys.length : 0)), 0);
+        elStatStock.innerText = Number(totalStock).toLocaleString();
+      }
+    }
 
-  const elStatSold = document.getElementById('stat-counter-sold');
-  if (elStatSold) {
-    const totalSold = APP_STATE.products.reduce((acc, p) => acc + (p.sold || 0), 0);
-    elStatSold.innerText = totalSold || c.stats.sold;
+    const elStatSold = document.getElementById('stat-counter-sold');
+    if (elStatSold) {
+      const soldCount = Number(c.stats.sold || 938);
+      elStatSold.innerText = Number(soldCount).toLocaleString();
+    }
   }
 }
 
@@ -876,8 +913,44 @@ function confirmPurchase() {
   activeProduct.sold = (activeProduct.sold || 0) + 1;
   localStorage.setItem('px_products', JSON.stringify(APP_STATE.products));
 
+  // Update live store stats (ยอดจำหน่ายแล้ว +1, คลังสินค้า -1)
+  if (!APP_STATE.storeConfig.stats) {
+    APP_STATE.storeConfig.stats = { users: 4913, products: 4, stock: 21, sold: 938, usersMode: "fixed", productsMode: "auto", stockMode: "auto" };
+  }
+  APP_STATE.storeConfig.stats.sold = (Number(APP_STATE.storeConfig.stats.sold) || 938) + 1;
+  if (APP_STATE.storeConfig.stats.stockMode === 'custom' && Number(APP_STATE.storeConfig.stats.stock) > 0) {
+    APP_STATE.storeConfig.stats.stock = Number(APP_STATE.storeConfig.stats.stock) - 1;
+  }
+  localStorage.setItem('px_store_config', JSON.stringify(APP_STATE.storeConfig));
+
+  // Add to Recent Buyers feed & trigger real-time toast
+  const buyerEntry = {
+    name: APP_STATE.currentUser.username,
+    item: activeProduct.name,
+    price: plan.price
+  };
+  if (!APP_STATE.recentBuyersConfig) APP_STATE.recentBuyersConfig = { enabled: true, realOnly: false, buyers: [] };
+  if (!Array.isArray(APP_STATE.recentBuyersConfig.buyers)) APP_STATE.recentBuyersConfig.buyers = [];
+  APP_STATE.recentBuyersConfig.buyers.unshift(buyerEntry);
+  if (APP_STATE.recentBuyersConfig.buyers.length > 30) APP_STATE.recentBuyersConfig.buyers.pop();
+  localStorage.setItem('px_recent_buyers_config', JSON.stringify(APP_STATE.recentBuyersConfig));
+  renderPurchaseToast(buyerEntry);
+
+  // Atomic Cloud Purchase Sync
+  cloudSyncAction('purchase', {
+    order: newOrder,
+    username: APP_STATE.currentUser.username,
+    newBalance: APP_STATE.currentUser.balance,
+    productId: activeProduct.id,
+    productStock: activeProduct.stock,
+    productSold: activeProduct.sold,
+    updatedStats: APP_STATE.storeConfig.stats,
+    buyerItem: buyerEntry
+  });
+
   renderProducts();
   applyStoreConfig();
+  renderHistory();
   closeProductModal();
   showOrderSuccessModal(newOrder);
 }
@@ -1604,6 +1677,7 @@ function saveProductFromAdmin(e) {
   }
 
   localStorage.setItem('px_products', JSON.stringify(APP_STATE.products));
+  cloudSyncAction('save_products', { products: APP_STATE.products });
   renderProducts();
   renderAdminProducts();
   applyStoreConfig();
@@ -1614,6 +1688,7 @@ function deleteProduct(id) {
   if (!confirm('ยืนยันที่จะลบสินค้ารายการนี้ใช่หรือไม่?')) return;
   APP_STATE.products = APP_STATE.products.filter(p => p.id !== id);
   localStorage.setItem('px_products', JSON.stringify(APP_STATE.products));
+  cloudSyncAction('save_products', { products: APP_STATE.products });
   renderProducts();
   renderAdminProducts();
   applyStoreConfig();
@@ -1860,6 +1935,7 @@ function saveTopupSettings(e) {
   APP_STATE.topupConfig.bonusPercent = parseFloat(document.getElementById('admin-tp-bonus').value) || 0;
 
   localStorage.setItem('px_topup_config', JSON.stringify(APP_STATE.topupConfig));
+  cloudSyncAction('save_topup_config', { topupConfig: APP_STATE.topupConfig });
   applyTopupConfig();
   showNotification('บันทึกการตั้งค่าระบบเติมเงินแบบ Real-time เรียบร้อยแล้ว!', 'success');
 }
@@ -1881,7 +1957,116 @@ function populateAdminSettingsForm() {
     logoPreview.src = c.logoImage || 'assets/logo.png?v=20261009_v2';
   }
 
+  // Populate Homepage Live Stats Form
+  if (c.stats) {
+    const stUsers = document.getElementById('admin-stat-input-users');
+    if (stUsers) stUsers.value = c.stats.users || 4913;
+
+    const stModeReal = document.getElementById('admin-stat-users-real');
+    const stModeFixed = document.getElementById('admin-stat-users-fixed');
+    if (c.stats.usersMode === 'real_plus_base') {
+      if (stModeReal) stModeReal.checked = true;
+    } else {
+      if (stModeFixed) stModeFixed.checked = true;
+    }
+
+    const prodAutoCheck = document.getElementById('admin-stat-products-auto');
+    const prodInput = document.getElementById('admin-stat-input-products');
+    const prodRealBadge = document.getElementById('admin-stat-products-real-count');
+    if (prodRealBadge) prodRealBadge.innerText = APP_STATE.products.length;
+    if (prodAutoCheck) {
+      prodAutoCheck.checked = c.stats.productsMode !== 'custom';
+      if (prodInput) {
+        prodInput.value = (c.stats.productsMode === 'custom' && typeof c.stats.products === 'number') ? c.stats.products : APP_STATE.products.length;
+        prodInput.disabled = prodAutoCheck.checked;
+      }
+    }
+
+    const stockAutoCheck = document.getElementById('admin-stat-stock-auto');
+    const stockInput = document.getElementById('admin-stat-input-stock');
+    const realStockCount = APP_STATE.products.reduce((acc, p) => acc + (p.stock || (p.keys ? p.keys.length : 0)), 0);
+    const stockRealBadge = document.getElementById('admin-stat-stock-real-count');
+    if (stockRealBadge) stockRealBadge.innerText = realStockCount;
+    if (stockAutoCheck) {
+      stockAutoCheck.checked = c.stats.stockMode !== 'custom';
+      if (stockInput) {
+        stockInput.value = (c.stats.stockMode === 'custom' && typeof c.stats.stock === 'number') ? c.stats.stock : (realStockCount || 21);
+        stockInput.disabled = stockAutoCheck.checked;
+      }
+    }
+
+    const soldInput = document.getElementById('admin-stat-input-sold');
+    if (soldInput) soldInput.value = c.stats.sold || 938;
+  }
+
   populateAdminRecentBuyers();
+}
+
+function toggleStatProductsAuto(isAuto) {
+  const prodInput = document.getElementById('admin-stat-input-products');
+  if (!prodInput) return;
+  prodInput.disabled = isAuto;
+  if (isAuto) {
+    prodInput.value = APP_STATE.products.length;
+  }
+}
+
+function toggleStatStockAuto(isAuto) {
+  const stockInput = document.getElementById('admin-stat-input-stock');
+  if (!stockInput) return;
+  stockInput.disabled = isAuto;
+  if (isAuto) {
+    const realStock = APP_STATE.products.reduce((acc, p) => acc + (p.stock || (p.keys ? p.keys.length : 0)), 0);
+    stockInput.value = realStock;
+  }
+}
+
+function saveStatsSettings(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  if (!APP_STATE.storeConfig.stats) APP_STATE.storeConfig.stats = {};
+
+  const usersVal = parseInt(document.getElementById('admin-stat-input-users').value) || 4913;
+  const isRealUsers = document.getElementById('admin-stat-users-real')?.checked;
+  
+  const isProdAuto = document.getElementById('admin-stat-products-auto')?.checked;
+  const prodVal = parseInt(document.getElementById('admin-stat-input-products').value) || APP_STATE.products.length;
+
+  const isStockAuto = document.getElementById('admin-stat-stock-auto')?.checked;
+  const stockVal = parseInt(document.getElementById('admin-stat-input-stock').value) || 21;
+
+  const soldVal = parseInt(document.getElementById('admin-stat-input-sold').value) || 938;
+
+  APP_STATE.storeConfig.stats = {
+    users: usersVal,
+    usersMode: isRealUsers ? 'real_plus_base' : 'fixed',
+    products: prodVal,
+    productsMode: isProdAuto ? 'auto' : 'custom',
+    stock: stockVal,
+    stockMode: isStockAuto ? 'auto' : 'custom',
+    sold: soldVal
+  };
+
+  localStorage.setItem('px_store_config', JSON.stringify(APP_STATE.storeConfig));
+  applyStoreConfig();
+  cloudSyncAction('save_stats', { stats: APP_STATE.storeConfig.stats });
+  showNotification('บันทึกตัวเลขสถิติหน้าแรกสำเร็จ! อัปเดตไปยังทุกเครื่องเรียบร้อยแล้ว', 'success');
+}
+
+function resetStatsToDefault() {
+  APP_STATE.storeConfig.stats = {
+    users: 4913,
+    products: 4,
+    stock: 21,
+    sold: 938,
+    usersMode: "fixed",
+    productsMode: "auto",
+    stockMode: "auto"
+  };
+  localStorage.setItem('px_store_config', JSON.stringify(APP_STATE.storeConfig));
+  populateAdminSettingsForm();
+  applyStoreConfig();
+  cloudSyncAction('save_stats', { stats: APP_STATE.storeConfig.stats });
+  showNotification('รีเซ็ตตัวเลขสถิติเป็นค่ามาตรฐาน (4,913 / 4 / 21 / 938) เรียบร้อยแล้ว!', 'info');
 }
 
 function handleLogoUpload(event) {
@@ -1897,6 +2082,7 @@ function handleLogoUpload(event) {
 
     localStorage.setItem('px_store_config', JSON.stringify(APP_STATE.storeConfig));
     applyStoreConfig();
+    cloudSyncAction('save_store_config', { storeConfig: APP_STATE.storeConfig });
     showNotification('เปลี่ยนโลโก้ร้านค้าสำเร็จแบบ Real-time ทั่วเว็บไซต์!', 'success');
   };
   reader.readAsDataURL(file);
@@ -1928,6 +2114,7 @@ function saveStoreSettings(e) {
 
   localStorage.setItem('px_store_config', JSON.stringify(APP_STATE.storeConfig));
   applyStoreConfig();
+  cloudSyncAction('save_store_config', { storeConfig: APP_STATE.storeConfig });
   showNotification('บันทึกการตั้งค่าร้านค้าและแบนเนอร์แบบ Real-time สำเร็จ!', 'success');
 }
 
@@ -2894,6 +3081,7 @@ function resetRecentBuyersToDefault() {
   APP_STATE.recentBuyersConfig.enabled = true;
   APP_STATE.recentBuyersConfig.realOnly = false;
   localStorage.setItem('px_recent_buyers_config', JSON.stringify(APP_STATE.recentBuyersConfig));
+  cloudSyncAction('save_recent_buyers', { buyers: APP_STATE.recentBuyersConfig.buyers });
   populateAdminRecentBuyers();
   showNotification('รีเซ็ตรายชื่อคนซื้อล่าสุดเป็นค่าเริ่มต้นเรียบร้อยแล้ว!', 'success');
 }
@@ -2902,6 +3090,7 @@ function resetRecentBuyersToDefault() {
 function clearAllRecentBuyers() {
   APP_STATE.recentBuyersConfig.buyers = [];
   localStorage.setItem('px_recent_buyers_config', JSON.stringify(APP_STATE.recentBuyersConfig));
+  cloudSyncAction('save_recent_buyers', { buyers: [] });
   populateAdminRecentBuyers();
   showNotification('ล้างรายชื่อคนซื้อล่าสุดทั้งหมดเรียบร้อยแล้ว (ป๊อปอัปจะไม่เด้ง)', 'info');
 }
@@ -2913,6 +3102,7 @@ function updateRecentBuyersConfig() {
   APP_STATE.recentBuyersConfig.enabled = enabled;
   APP_STATE.recentBuyersConfig.realOnly = realOnly;
   localStorage.setItem('px_recent_buyers_config', JSON.stringify(APP_STATE.recentBuyersConfig));
+  cloudSyncAction('save_recent_buyers', { buyers: APP_STATE.recentBuyersConfig.buyers });
   showNotification('บันทึกการตั้งค่าการแจ้งเตือนแล้ว', 'success');
 }
 
@@ -2927,6 +3117,7 @@ function addNewRecentBuyer(e) {
   if (!APP_STATE.recentBuyersConfig.buyers) APP_STATE.recentBuyersConfig.buyers = [];
   APP_STATE.recentBuyersConfig.buyers.unshift({ name, item, price });
   localStorage.setItem('px_recent_buyers_config', JSON.stringify(APP_STATE.recentBuyersConfig));
+  cloudSyncAction('save_recent_buyers', { buyers: APP_STATE.recentBuyersConfig.buyers });
 
   document.getElementById('admin-toast-new-name').value = '';
   document.getElementById('admin-toast-new-item').value = '';
@@ -2940,6 +3131,7 @@ function deleteRecentBuyer(idx) {
   if (!APP_STATE.recentBuyersConfig.buyers) return;
   APP_STATE.recentBuyersConfig.buyers.splice(idx, 1);
   localStorage.setItem('px_recent_buyers_config', JSON.stringify(APP_STATE.recentBuyersConfig));
+  cloudSyncAction('save_recent_buyers', { buyers: APP_STATE.recentBuyersConfig.buyers });
   populateAdminRecentBuyers();
   showNotification('ลบรายการคนซื้อแล้ว', 'info');
 }
@@ -2957,6 +3149,7 @@ function resetAllStoreOrders() {
   if (!confirm('ยืนยันที่จะล้างประวัติคำสั่งซื้อทั้งหมดในระบบใช่หรือไม่?')) return;
   APP_STATE.purchases = [];
   localStorage.setItem('px_orders', JSON.stringify(APP_STATE.purchases));
+  cloudSyncAction('clear_orders');
   renderAdminOrders();
   renderHistory();
   showNotification('ล้างประวัติคำสั่งซื้อทั้งหมดในระบบเรียบร้อยแล้ว', 'info');
@@ -3329,10 +3522,10 @@ let isCloudSyncing = false;
 
 async function initCloudSync() {
   await refreshUsersFromCloud(false);
-  // Auto-sync in background every 12 seconds
+  // Auto-sync across all clients in real-time every 6 seconds
   setInterval(() => {
     refreshUsersFromCloud(false);
-  }, 12000);
+  }, 6000);
 }
 
 async function refreshUsersFromCloud(showNotice = false) {
@@ -3341,47 +3534,38 @@ async function refreshUsersFromCloud(showNotice = false) {
   const badge = document.getElementById('cloud-sync-status-badge');
 
   try {
-    let cloudUsers = null;
-    let cloudOrders = null;
+    let cloudData = null;
 
     // 1. Try Vercel Serverless Function endpoint
     try {
-      const res = await fetch(CLOUD_SYNC_ENDPOINT, { cache: 'no-store' });
+      const res = await fetch(CLOUD_SYNC_ENDPOINT + '?t=' + Date.now(), { cache: 'no-store' });
       if (res.ok) {
-        const data = await res.json();
-        if (data && Array.isArray(data.users)) {
-          cloudUsers = data.users;
-          cloudOrders = data.orders;
-        }
+        cloudData = await res.json();
       }
     } catch (e) {
       // Endpoint error or local dev
     }
 
     // 2. Gist fallback if serverless endpoint is not responding
-    if (!cloudUsers) {
+    if (!cloudData || !cloudData.users) {
       try {
         const res2 = await fetch(GIST_FALLBACK_RAW + '?t=' + Date.now());
         if (res2.ok) {
-          const data2 = await res2.json();
-          if (data2 && Array.isArray(data2.users)) {
-            cloudUsers = data2.users;
-            cloudOrders = data2.orders;
-          }
+          cloudData = await res2.json();
         }
       } catch (e2) {}
     }
 
-    if (cloudUsers && cloudUsers.length > 0) {
+    if (cloudData && Array.isArray(cloudData.users) && cloudData.users.length > 0) {
       if (badge) {
         badge.textContent = 'ONLINE';
         badge.className = 'px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 font-mono';
       }
 
-      // Merge Cloud users into local state
+      // A. Real-time Users Sync
       const userMap = new Map();
       APP_STATE.users.forEach(u => userMap.set(u.username, u));
-      cloudUsers.forEach(cu => {
+      cloudData.users.forEach(cu => {
         userMap.set(cu.username, cu);
       });
       APP_STATE.users = Array.from(userMap.values());
@@ -3399,11 +3583,58 @@ async function refreshUsersFromCloud(showNotice = false) {
             isCloudSyncing = false;
             return;
           }
-          APP_STATE.currentUser.balance = myCloudProfile.balance;
-          APP_STATE.currentUser.role = myCloudProfile.role;
-          localStorage.setItem('px_currentUser', JSON.stringify(APP_STATE.currentUser));
-          updateAuthUI();
+          if (APP_STATE.currentUser.balance !== myCloudProfile.balance || APP_STATE.currentUser.role !== myCloudProfile.role) {
+            APP_STATE.currentUser.balance = myCloudProfile.balance;
+            APP_STATE.currentUser.role = myCloudProfile.role;
+            localStorage.setItem('px_currentUser', JSON.stringify(APP_STATE.currentUser));
+            updateAuthUI();
+          }
         }
+      }
+
+      // B. Real-time Products Sync (Stock deductions from purchases or admin changes)
+      if (Array.isArray(cloudData.products) && cloudData.products.length > 0) {
+        APP_STATE.products = cloudData.products;
+        localStorage.setItem('px_products', JSON.stringify(APP_STATE.products));
+        renderProducts();
+        const prodPanel = document.getElementById('admin-panel-products');
+        if (prodPanel && !prodPanel.classList.contains('hidden')) {
+          renderAdminProducts();
+        }
+      }
+
+      // C. Real-time Orders Sync
+      if (Array.isArray(cloudData.orders)) {
+        APP_STATE.purchases = cloudData.orders;
+        localStorage.setItem('px_orders', JSON.stringify(APP_STATE.purchases));
+        const ordersPanel = document.getElementById('admin-panel-orders');
+        if (ordersPanel && !ordersPanel.classList.contains('hidden')) {
+          renderAdminOrders();
+        }
+        renderHistory();
+      }
+
+      // D. Real-time Store Config & Homepage Stats Sync
+      const isEditingSettings = document.activeElement && document.activeElement.id && (document.activeElement.id.startsWith('admin-st-') || document.activeElement.id.startsWith('admin-stat-'));
+      if (cloudData.storeConfig && !isEditingSettings) {
+        APP_STATE.storeConfig = { ...APP_STATE.storeConfig, ...cloudData.storeConfig };
+        localStorage.setItem('px_store_config', JSON.stringify(APP_STATE.storeConfig));
+        applyStoreConfig();
+      }
+
+      // E. Real-time Topup Config Sync
+      const isEditingTopup = document.activeElement && document.activeElement.id && document.activeElement.id.startsWith('admin-tp-');
+      if (cloudData.topupConfig && !isEditingTopup) {
+        APP_STATE.topupConfig = { ...APP_STATE.topupConfig, ...cloudData.topupConfig };
+        localStorage.setItem('px_topup_config', JSON.stringify(APP_STATE.topupConfig));
+        applyTopupConfig();
+      }
+
+      // F. Real-time Recent Buyers Sync
+      if (Array.isArray(cloudData.recentBuyers) && cloudData.recentBuyers.length > 0) {
+        if (!APP_STATE.recentBuyersConfig) APP_STATE.recentBuyersConfig = { enabled: true, realOnly: false, buyers: [] };
+        APP_STATE.recentBuyersConfig.buyers = cloudData.recentBuyers;
+        localStorage.setItem('px_recent_buyers_config', JSON.stringify(APP_STATE.recentBuyersConfig));
       }
 
       // Update admin user table if admin panel is open
@@ -3444,10 +3675,39 @@ async function cloudSyncAction(action, payload) {
     });
     if (res.ok) {
       const data = await res.json();
-      if (data && Array.isArray(data.users)) {
-        APP_STATE.users = data.users;
-        localStorage.setItem('px_users', JSON.stringify(APP_STATE.users));
-        renderAdminUsers();
+      if (data) {
+        if (Array.isArray(data.users)) {
+          APP_STATE.users = data.users;
+          localStorage.setItem('px_users', JSON.stringify(APP_STATE.users));
+          renderAdminUsers();
+        }
+        if (Array.isArray(data.products)) {
+          APP_STATE.products = data.products;
+          localStorage.setItem('px_products', JSON.stringify(APP_STATE.products));
+          renderProducts();
+          renderAdminProducts();
+        }
+        if (data.storeConfig) {
+          APP_STATE.storeConfig = { ...APP_STATE.storeConfig, ...data.storeConfig };
+          localStorage.setItem('px_store_config', JSON.stringify(APP_STATE.storeConfig));
+          applyStoreConfig();
+        }
+        if (data.topupConfig) {
+          APP_STATE.topupConfig = { ...APP_STATE.topupConfig, ...data.topupConfig };
+          localStorage.setItem('px_topup_config', JSON.stringify(APP_STATE.topupConfig));
+          applyTopupConfig();
+        }
+        if (Array.isArray(data.orders)) {
+          APP_STATE.purchases = data.orders;
+          localStorage.setItem('px_orders', JSON.stringify(APP_STATE.purchases));
+          renderAdminOrders();
+          renderHistory();
+        }
+        if (Array.isArray(data.recentBuyers)) {
+          if (!APP_STATE.recentBuyersConfig) APP_STATE.recentBuyersConfig = { enabled: true, realOnly: false, buyers: [] };
+          APP_STATE.recentBuyersConfig.buyers = data.recentBuyers;
+          localStorage.setItem('px_recent_buyers_config', JSON.stringify(APP_STATE.recentBuyersConfig));
+        }
       }
       return data;
     }

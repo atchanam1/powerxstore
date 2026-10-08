@@ -1,5 +1,5 @@
 // Vercel Serverless Function: PowerXStore Real-Time Cloud Sync API
-// Bridges multi-device user registration, balance management, and member bans via GitHub Gist DB
+// Bridges multi-device user registration, balance management, member bans, real-time products, orders, stats & store settings via GitHub Gist DB
 
 const GIST_ID = process.env.GIST_ID || 'e67e5914f8a2ca2576a2307b2a75c292';
 const GH_TOKEN = process.env.GH_TOKEN || Buffer.from('Z2hvX2ZneVIyV284MUp1RmdVWFVHWVI2Qmdqb0xDMTFUdDFNRDFyOA==', 'base64').toString('utf-8');
@@ -104,13 +104,17 @@ module.exports = async (req, res) => {
     return res.status(200).end();
   }
 
-  // GET: Fetch real-time cloud data
+  // GET: Fetch real-time cloud data across the entire site
   if (req.method === 'GET') {
     const db = await getGistData();
     return res.status(200).json({
       success: true,
       users: db.users || DEFAULT_USERS,
       orders: db.orders || [],
+      products: db.products || null,
+      storeConfig: db.storeConfig || null,
+      topupConfig: db.topupConfig || null,
+      recentBuyers: db.recentBuyers || null,
       updatedAt: db.updatedAt || new Date().toISOString()
     });
   }
@@ -161,13 +165,24 @@ module.exports = async (req, res) => {
       };
 
       db.users.push(newUser);
+
+      // Increment stats users if present
+      if (db.storeConfig && db.storeConfig.stats) {
+        if (db.storeConfig.stats.usersMode === 'real_plus_base') {
+          // auto counted
+        } else {
+          db.storeConfig.stats.users = (Number(db.storeConfig.stats.users) || 4913) + 1;
+        }
+      }
+
       await updateGistData(db);
 
       return res.status(200).json({
         success: true,
         message: 'สมัครสมาชิกสำเร็จและบันทึกสู่ระบบคลาวด์แล้ว',
         user: newUser,
-        users: db.users
+        users: db.users,
+        storeConfig: db.storeConfig
       });
     }
 
@@ -303,22 +318,147 @@ module.exports = async (req, res) => {
       return res.status(404).json({ success: false, message: 'ไม่พบผู้ใช้ในระบบ' });
     }
 
-    // 8. RECORD ORDER
+    // 8. REAL-TIME PURCHASE ORDER & LIVE STATS AUTOMATION
+    if (action === 'purchase') {
+      const { order, username, newBalance, productId, productStock, productSold, updatedStats, buyerItem } = payload || {};
+      
+      // A. Update user balance
+      if (username) {
+        const u = db.users.find(x => x.username === username);
+        if (u && typeof newBalance === 'number') {
+          u.balance = newBalance;
+        }
+      }
+
+      // B. Append order record
+      if (order) {
+        if (!Array.isArray(db.orders)) db.orders = [];
+        db.orders.unshift(order);
+        if (db.orders.length > 300) db.orders.pop();
+      }
+
+      // C. Update product stock & sold count
+      if (productId && Array.isArray(db.products)) {
+        const prod = db.products.find(p => p.id === productId);
+        if (prod) {
+          if (typeof productStock === 'number') prod.stock = productStock;
+          else prod.stock = Math.max(0, (prod.stock || 0) - 1);
+          if (typeof productSold === 'number') prod.sold = productSold;
+          else prod.sold = (prod.sold || 0) + 1;
+          if (Array.isArray(prod.keys) && prod.keys.length > 0) {
+            prod.keys.shift();
+          }
+        }
+      }
+
+      // D. Update live stats counters (Auto-increment sold count & decrement stock)
+      if (!db.storeConfig) db.storeConfig = {};
+      if (!db.storeConfig.stats) {
+        db.storeConfig.stats = { users: 4913, products: 4, stock: 21, sold: 938, usersMode: "fixed", productsMode: "auto", stockMode: "auto" };
+      }
+      if (updatedStats) {
+        db.storeConfig.stats = { ...db.storeConfig.stats, ...updatedStats };
+      } else {
+        db.storeConfig.stats.sold = (Number(db.storeConfig.stats.sold) || 938) + 1;
+        if (Number(db.storeConfig.stats.stock) > 0) {
+          db.storeConfig.stats.stock = Number(db.storeConfig.stats.stock) - 1;
+        }
+      }
+
+      // E. Add to live recent buyers ticker
+      if (buyerItem) {
+        if (!Array.isArray(db.recentBuyers)) db.recentBuyers = [];
+        db.recentBuyers.unshift(buyerItem);
+        if (db.recentBuyers.length > 30) db.recentBuyers.pop();
+      }
+
+      await updateGistData(db);
+
+      return res.status(200).json({
+        success: true,
+        message: 'บันทึกคำสั่งซื้อและการอัปเดตแบบเรียลไทม์สำเร็จ',
+        users: db.users,
+        orders: db.orders,
+        products: db.products,
+        storeConfig: db.storeConfig,
+        recentBuyers: db.recentBuyers
+      });
+    }
+
+    // 9. SAVE STORE CONFIG & STATS
+    if (action === 'save_store_config') {
+      const { storeConfig } = payload || {};
+      if (storeConfig) {
+        db.storeConfig = storeConfig;
+        await updateGistData(db);
+      }
+      return res.status(200).json({ success: true, storeConfig: db.storeConfig });
+    }
+
+    // 10. SAVE STATS EXCLUSIVELY
+    if (action === 'save_stats') {
+      const { stats } = payload || {};
+      if (stats) {
+        if (!db.storeConfig) db.storeConfig = {};
+        db.storeConfig.stats = stats;
+        await updateGistData(db);
+      }
+      return res.status(200).json({ success: true, storeConfig: db.storeConfig });
+    }
+
+    // 11. SAVE PRODUCTS
+    if (action === 'save_products') {
+      const { products } = payload || {};
+      if (Array.isArray(products)) {
+        db.products = products;
+        await updateGistData(db);
+      }
+      return res.status(200).json({ success: true, products: db.products });
+    }
+
+    // 12. SAVE TOPUP CONFIG
+    if (action === 'save_topup_config') {
+      const { topupConfig } = payload || {};
+      if (topupConfig) {
+        db.topupConfig = topupConfig;
+        await updateGistData(db);
+      }
+      return res.status(200).json({ success: true, topupConfig: db.topupConfig });
+    }
+
+    // 13. SAVE RECENT BUYERS
+    if (action === 'save_recent_buyers') {
+      const { buyers } = payload || {};
+      if (Array.isArray(buyers)) {
+        db.recentBuyers = buyers;
+        await updateGistData(db);
+      }
+      return res.status(200).json({ success: true, recentBuyers: db.recentBuyers });
+    }
+
+    // 14. CLEAR ALL ORDERS
+    if (action === 'clear_orders') {
+      db.orders = [];
+      await updateGistData(db);
+      return res.status(200).json({ success: true, orders: db.orders });
+    }
+
+    // 15. RECORD SINGLE ORDER
     if (action === 'add_order') {
       const { order } = payload || {};
       if (order) {
+        if (!Array.isArray(db.orders)) db.orders = [];
         db.orders.unshift(order);
-        if (db.orders.length > 200) db.orders.pop();
+        if (db.orders.length > 300) db.orders.pop();
         await updateGistData(db);
       }
       return res.status(200).json({ success: true, orders: db.orders });
     }
 
-    // 8. SYNC ALL USERS (Admin manual full sync)
+    // 16. SYNC ALL USERS
     if (action === 'sync_users') {
       const { users } = payload || {};
       if (Array.isArray(users) && users.length > 0) {
-        // Merge without losing online users
         const map = new Map();
         db.users.forEach(u => map.set(u.username, u));
         users.forEach(u => {
